@@ -1,0 +1,157 @@
+    /**
+     * 提交友情链接申请
+     */
+    public function submitFriendLink()
+    {
+        if ($this->request->isPost()) {
+            $user = \think\facade\Session::get('user');
+            if (!$user) {
+                return json(['code' => 0, 'msg' => '请先登录']);
+            }
+            
+            $id = $this->request->post('id', 0, 'intval');
+            $name = $this->request->post('name', '');
+            $url = $this->request->post('url', '');
+            
+            if (empty($name) || empty($url)) {
+                return json(['code' => 0, 'msg' => '网站名称和链接不能为空']);
+            }
+            
+            $data = [
+                'user_id'     => $user['id'],
+                'name'        => htmlspecialchars($name),
+                'url'         => htmlspecialchars($url),
+                'description' => $this->request->post('description', ''),
+                'logo'        => $this->request->post('logo', ''),
+                'update_time' => time()
+            ];
+
+            if ($id > 0) {
+                // 修改已存在的申请 (只有待审核和被拒绝的可以修改，修改后重置为待审核)
+                $link = \think\facade\Db::name('blog_friend_link')
+                    ->where('id', $id)
+                    ->where('user_id', $user['id'])
+                    ->find();
+                    
+                if (!$link || $link['status'] == 1 || $link['is_paid'] == 1) {
+                     return json(['code' => 0, 'msg' => '此状态下的友链无法修改']);
+                }
+                
+                $data['status'] = 0; // 重置为待审核
+                $res = \think\facade\Db::name('blog_friend_link')
+                    ->where('id', $id)
+                    ->update($data);
+                
+                if ($res !== false) {
+                    return json(['code' => 1, 'msg' => '修改成功，请等待重新审核']);
+                } else {
+                    return json(['code' => 0, 'msg' => '修改失败，请稍后再试']);
+                }
+            } else {
+                // 新增免费申请
+                $data['create_time'] = time();
+                $data['status'] = 0; // 待审核
+                $data['is_paid'] = 0;
+                $data['pay_amount'] = 0;
+                
+                \think\facade\Db::name('blog_friend_link')->insert($data);
+                
+                return json(['code' => 1, 'msg' => '申请提交成功，请等待管理员审核']);
+            }
+        }
+        return json(['code' => 0, 'msg' => '非法请求']);
+    }
+
+    /**
+     * 获取自己的友链详情
+     */
+    public function getFriendLink()
+    {
+        $user = \think\facade\Session::get('user');
+        if (!$user) {
+            return json(['code' => 0, 'msg' => '请先登录']);
+        }
+
+        $id = $this->request->get('id', 0, 'intval');
+        if (!$id) {
+            return json(['code' => 0, 'msg' => '参数错误']);
+        }
+
+        $info = \think\facade\Db::name('blog_friend_link')
+            ->where('id', $id)
+            ->where('user_id', $user['id'])
+            ->find();
+
+        if (!$info) {
+            return json(['code' => 0, 'msg' => '记录不存在']);
+        }
+
+        return json(['code' => 1, 'data' => $info]);
+    }
+
+    /**
+     * 付费购买友情链接 (直接上架)
+     */
+    public function buyFriendLink()
+    {
+        $sessionUser = Session::get('user');
+        if (!$sessionUser) {
+            return json(['code' => 0, 'msg' => '请先登录']);
+        }
+
+        $name = $this->request->post('name', '');
+        $url = $this->request->post('url', '');
+        $description = $this->request->post('description', '');
+        $logo = $this->request->post('logo', '');
+        
+        if (empty($name) || empty($url)) {
+            return json(['code' => 0, 'msg' => '网站名称和链接不能为空']);
+        }
+
+        $price = (float)Config::getVal('friend_link_price', 0);
+        if ($price <= 0) {
+            return json(['code' => 0, 'msg' => '当前未开启付费直通功能']);
+        }
+
+        // 1. 创建友链记录 (状态先设为待审核，支付成功后改为已通过)
+        $linkId = \think\facade\Db::name('blog_friend_link')->insertGetId([
+            'user_id'     => $sessionUser['id'],
+            'name'        => htmlspecialchars($name),
+            'url'         => htmlspecialchars($url),
+            'description' => htmlspecialchars($description),
+            'logo'        => htmlspecialchars($logo),
+            'status'      => 0, // 支付成功后在 OrderService 中修改为1
+            'is_paid'     => 1, // 标记为付费通道
+            'pay_amount'  => $price,
+            'create_time' => time(),
+            'update_time' => time()
+        ]);
+
+        if (!$linkId) {
+            return json(['code' => 0, 'msg' => '处理失败，请稍后重试']);
+        }
+
+        // 2. 创建支付订单 (type = 5 表示友链购买)
+        $orderNo = date('YmdHis') . mt_rand(1000, 9999);
+        $orderId = \think\facade\Db::name('blog_order')->insertGetId([
+            'order_no'    => $orderNo,
+            'user_id'     => $sessionUser['id'],
+            'article_id'  => $linkId, // 用 article_id 暂存友链表中的记录ID
+            'vip_id'      => 0,
+            'type'        => 5, // 自定义类型 5 = 购买友链
+            'price'       => $price,
+            'status'      => 0, 
+            'create_time' => time()
+        ]);
+
+        if ($orderId) {
+            return json([
+                'code' => 1, 
+                'msg'  => '订单创建成功，前往支付...', 
+                'url'  => (string)url('index/Pay/index', ['order_no' => $orderNo])
+            ]);
+        } else {
+            return json(['code' => 0, 'msg' => '订单创建失败']);
+        }
+    }
+}

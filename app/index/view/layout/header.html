@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{$title|default=$config.site_title} - {$config.site_name}</title>
+    <meta name="keywords" content="{$keywords|default=$config.site_keywords}">
+    <meta name="description" content="{$description|default=$config.site_description}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/ripro.css">
+    <link rel="stylesheet" href="/static/css/mobile.css">
+    <script src="/static/layui/layui.js"></script>
+    <link rel="stylesheet" href="/static/css/header.css">
+</head>
+<body>
+
+<!-- Hero Header with Search -->
+<div class="hero-header">
+    <!-- Top Nav -->
+    <div class="top-nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-left">
+                    <a href="/" class="logo-link">
+                        <i class="layui-icon layui-icon-home"></i>
+                        <span class="logo-text">{$config.site_name}</span>
+                    </a>
+                    <nav class="main-menu">
+                           {volist name="categories" id="vo" key="k"}
+                            {if $k < 8}
+                                {if !empty($vo.children)}
+                                <div class="menu-item-has-children">
+                                    <a href="/?cat={$vo.id}.html" class="menu-item">
+                                        {if !empty($vo.icon)}<i class="layui-icon {$vo.icon}"></i>{/if}
+                                        {$vo.name} 
+                                        <i class="layui-icon layui-icon-down" style="font-size: 12px;"></i>
+                                    </a>
+                                    <ul class="sub-menu">
+                                        {volist name="vo.children" id="child"}
+                                        <li><a href="/?cat={$child.id}.html">{$child.name}</a></li>
+                                        {/volist}
+                                    </ul>
+                                </div>
+                                {else /}
+                                <a href="/?cat={$vo.id}.html" class="menu-item">
+                                    {if !empty($vo.icon)}<i class="layui-icon {$vo.icon}"></i>{/if}
+                                    {$vo.name}
+                                </a>
+                                {/if}
+                            {/if}
+
+                            {if $k == 8}
+                            <div class="menu-item-has-children">
+                                <a href="javascript:;" class="menu-item">
+                                    <i class="layui-icon layui-icon-more"></i> 更多
+                                    <i class="layui-icon layui-icon-down" style="font-size: 12px;"></i>
+                                </a>
+                                <ul class="sub-menu">
+                            {/if}
+
+                            {if $k >= 8}
+                                <li><a href="/?cat={$vo.id}.html">{$vo.name}</a></li>
+                            {/if}
+                        {/volist}
+
+                        {if count($categories) >= 8}
+                                </ul>
+                            </div>
+                        {/if}
+                    </nav>
+                </div>
+                <div class="nav-right">
+                    <a href="#" class="nav-icon"><i class="layui-icon layui-icon-theme"></i></a>
+                    <a href="#" class="nav-icon"><i class="layui-icon layui-icon-notice"></i></a>
+                    {if $user}
+                    <div class="user-profile-nav">
+                        <a href="/user/index.html" class="nav-user">
+                            <i class="layui-icon layui-icon-username" style="font-size: 18px; margin-right: 5px;"></i>
+                            <span>{$user.nickname|default=$user.username}</span>
+                        </a>
+                        <!-- Profile Dropdown (Premium Style) -->
+                        <div class="user-dropdown-panel">
+                            <div class="dropdown-header">
+                                <div class="header-main">
+                                    <div class="user-avatar-box">
+                                        {if !empty($user.avatar)}
+                                            <img src="{$user.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                        {else /}
+                                            <i class="layui-icon layui-icon-username"></i>
+                                        {/if}
+                                    </div>
+                                    <div class="user-meta">
+                                        <div class="user-nickname">{$user.nickname|default=$user.username}</div>
+                                        <div class="vip-tag-box">
+                                            <span class="vip-tag">
+                                                <i class="layui-icon layui-icon-diamond"></i>
+                                                {if isset($user.vip_level) && $user.vip_level > 0}VIP会员{else}普通用户{/if}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-links">
+                                    <a href="{:url('user/logout')}" class="link-item"><i class="layui-icon layui-icon-logout"></i> 退出登录</a>
+                                    <a href="/user/index.html?tab=promotion.html" class="link-item"><i class="layui-icon layui-icon-share"></i> 我的推广</a>
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown-announcement">
+                                <a href="javascript:;" class="sign-btn" onclick="doCheckin()"><i class="layui-icon layui-icon-vercode"></i> 签到领取0.01金币</a>
+                            </div>
+
+                            <div class="dropdown-grid">
+                                <div class="grid-card balance-card">
+                                    <div class="card-label">金币余额</div>
+                                    <div class="card-value"><i class="layui-icon layui-icon-rmb"></i> {$user.money|default=0|number_format=2}</div>
+                                    <a href="javascript:;" onclick="recharge()" class="card-btn">充值</a>
+                                </div>
+                                <div class="grid-stack">
+                                    <a href="/user/index.html?tab=vip.html" class="stack-item vip-standard">
+                                        <i class="layui-icon layui-icon-diamond"></i> 本站VIP会员
+                                    </a>
+                                    <a href="/user/index.html?tab=vip.html" class="stack-item vip-permanent">
+                                        <i class="layui-icon layui-icon-diamond"></i> 本站永久VIP
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="dropdown-footer-icons">
+                                <a href="/user/index.html" class="footer-icon-item">
+                                    <div class="icon-circle"><i class="layui-icon layui-icon-username"></i></div>
+                                    <span>基本信息</span>
+                                </a>
+                                <a href="/user/index.html?tab=balance.html" class="footer-icon-item">
+                                    <div class="icon-circle"><i class="layui-icon layui-icon-rmb"></i></div>
+                                    <span>我的余额</span>
+                                </a>
+                                <a href="/user/index.html?tab=vip.html" class="footer-icon-item">
+                                    <div class="icon-circle"><i class="layui-icon layui-icon-diamond"></i></div>
+                                    <span>我的会员</span>
+                                </a>
+                                <a href="/user/index.html?tab=favorites.html" class="footer-icon-item">
+                                    <div class="icon-circle"><i class="layui-icon layui-icon-star"></i></div>
+                                    <span>我的收藏</span>
+                                </a>
+                                <a href="/user/index.html?tab=orders.html" class="footer-icon-item">
+                                    <div class="icon-circle"><i class="layui-icon layui-icon-form"></i></div>
+                                    <span>我的订单</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {else}
+                    <a href="javascript:;" onclick="showLogin()" class="nav-login">登录</a>
+                    {/if}
+                    <div class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                        <i class="layui-icon layui-icon-more"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hero Search Section -->
+    <div class="hero-search">
+        <canvas id="canvas-bg"></canvas>
+        <div class="container">
+            <h1 class="hero-title">搜索本站精品资源</h1>
+            <p class="hero-subtitle">{$config.site_name}是全网资源最全的VIP资源站/专注高端网站主题</p>
+            
+            <div class="search-box">
+                <select class="search-category" id="search-cat">
+                    <option value="">全站</option>
+                    {volist name="categories" id="vo"}
+                    <option value="{$vo.id}">{$vo.name}</option>
+                    {/volist}
+                </select>
+                <input type="text" class="search-input" placeholder="输入关键词 回车..." id="search-keyword">
+                <button class="search-btn" onclick="doSearch()"><i class="layui-icon layui-icon-search"></i></button>
+            </div>
+            
+            <div class="hot-tags">
+                <span class="tag-label">热搜词：</span>
+                {if !empty($config.hot_search_words)}
+                    {php}$hot_words = explode(',', $config['hot_search_words']);{/php}
+                    {volist name="hot_words" id="word"}
+                        <a href="{:url('index/index/search', ['keyword' => trim($word)])}" class="hot-tag">{$word|trim}</a>
+                    {/volist}
+                {else}
+                    <a href="{:url('index/index/search', ['keyword' => 'wordpress'])}" class="hot-tag">wordpress</a>
+                    <a href="{:url('index/index/search', ['keyword' => '源码'])}" class="hot-tag">源码</a>
+                    <a href="{:url('index/index/search', ['keyword' => '主题'])}" class="hot-tag">主题</a>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Navigation Drawer -->
+<div class="mobile-nav-mask" onclick="toggleMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobileDrawer">
+    <div class="mobile-nav-header">
+        <span style="font-size: 18px; font-weight: bold;">{$config.site_name}</span>
+        <i class="layui-icon layui-icon-close" onclick="toggleMobileMenu()" style="font-size: 20px; cursor: pointer;"></i>
+    </div>
+    <div class="mobile-nav-list">
+        <a href="/" class="mobile-nav-item"><i class="layui-icon layui-icon-home"></i> 首页</a>
+        {volist name="categories" id="vo"}
+            {if !empty($vo.children)}
+            <a href="javascript:;" class="mobile-nav-item has-sub" onclick="toggleSubMenu(this)">
+                {if !empty($vo.icon)}<i class="layui-icon {$vo.icon}"></i>{/if} {$vo.name} <i class="layui-icon layui-icon-down" style="float: right;"></i>
+            </a>
+            <div class="mobile-sub-menu">
+                {volist name="vo.children" id="child"}
+                <a href="/?cat={$child.id}.html" class="mobile-nav-item">{$child.name}</a>
+                {/volist}
+            </div>
+            {else /}
+            <a href="/?cat={$vo.id}.html" class="mobile-nav-item">
+                {if !empty($vo.icon)}<i class="layui-icon {$vo.icon}"></i>{/if} {$vo.name}
+            </a>
+            {/if}
+        {/volist}
+        
+        {if !$user}
+        <div style="padding: 20px;">
+            <button class="layui-btn layui-btn-fluid layui-bg-blue" onclick="showLogin();toggleMobileMenu()">登录</button>
+            <button class="layui-btn layui-btn-fluid layui-btn-primary" style="margin-top: 10px; margin-left: 0;" onclick="showRegister();toggleMobileMenu()">注册</button>
+        </div>
+        {else}
+        <a href="/user/index.html" class="mobile-nav-item"><i class="layui-icon layui-icon-username"></i> 个人中心</a>
+        <a href="{:url('user/logout')}" class="mobile-nav-item" style="color: #ff5722;"><i class="layui-icon layui-icon-logout"></i> 退出登录</a>
+        {/if}
+    </div>
+</div>
+
+
+
+<!-- Login/Register Modals -->
+<div id="auth-modals" style="display: none;">
+
+    <!-- Apply Friend Link Template -->
+    <div id="apply-friend-tpl" style="display: none;">
+        <div class="auth-modal-box" style="padding-bottom: 30px;">
+            <div class="auth-close-btn" onclick="layer.closeAll();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            <div class="auth-modal-header" style="margin-bottom: 25px;">
+                <h2>申请友情链接</h2>
+                <p style="color: #666; margin-top: 10px; font-size: 14px;">提交您的站点信息，与我们建立连接</p>
+            </div>
+            <form class="layui-form" lay-filter="applyFriendForm">
+                <input type="hidden" name="id" value="0">
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-website auth-input-icon"></i>
+                    <input type="text" name="name" lay-verify="required" placeholder="请输入网站名称 (必填)" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-link auth-input-icon"></i>
+                    <input type="url" name="url" lay-verify="required|url" placeholder="请输入网站链接 (如 https://www.example.com)" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-picture auth-input-icon"></i>
+                    <input type="url" name="logo" placeholder="网站Logo链接 (选填)" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-about auth-input-icon"></i>
+                    <input type="text" name="description" placeholder="网站描述 (选填)" class="auth-input">
+                </div>
+                
+                <div class="auth-form-item" style="display: flex; gap: 15px; margin-top: 15px; margin-bottom: 0;">
+                    <button type="button" class="layui-btn auth-submit-btn" style="flex: 1;" lay-submit lay-filter="applyFree">免费提交 (需审核)</button>
+                    {if isset($config.friend_link_price) && $config.friend_link_price > 0}
+                    <button type="button" class="layui-btn auth-submit-btn" style="flex: 1; background: #10b981 !important; box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);" onclick="applyPaidFn()">付费直通 (￥{$config.friend_link_price})</button>
+                    {/if}
+                </div>
+                {if isset($config.friend_link_price) && $config.friend_link_price > 0}
+                <div style="text-align: center; margin-top: 12px; font-size: 12px; color: #999;">
+                    * 提示：付费直通的友链首页展示期为 <span style="color: #e6a23c;">1个月 (30天)</span>
+                </div>
+                {/if}
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Template -->
+    <div id="login-tpl" style="display: none;">
+        <div class="auth-modal-box">
+            <div class="auth-close-btn" onclick="layer.closeAll();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            <div class="auth-modal-header">
+                <h2>用户登录</h2>
+            </div>
+            <form class="layui-form" lay-filter="loginForm">
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-username auth-input-icon"></i>
+                    <input type="text" name="username" lay-verify="required" placeholder="请输入账号" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-password auth-input-icon"></i>
+                    <input type="password" name="password" lay-verify="required" placeholder="请输入密码" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <button type="button" class="layui-btn auth-submit-btn" lay-submit lay-filter="doLogin">立即登录</button>
+                </div>
+                <div class="auth-footer-links" style="display: flex; justify-content: space-between;">
+                    <span>还没有账号？<a onclick="switchModal('register')">去注册</a></span>
+                    <a onclick="switchModal('retrieve')" style="color: #999;">忘记密码？</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Template -->
+    <div id="register-tpl" style="display: none;">
+        <div class="auth-modal-box">
+            <div class="auth-close-btn" onclick="layer.closeAll();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            <div class="auth-modal-header">
+                <h2>用户注册</h2>
+            </div>
+            <form class="layui-form" lay-filter="regForm">
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-username auth-input-icon"></i>
+                    <input type="text" name="username" lay-verify="required" placeholder="请设置登录账号" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-email auth-input-icon"></i>
+                    <input type="text" name="email" lay-verify="required|email" placeholder="请输入绑定的邮箱" class="auth-input">
+                </div>
+                <div class="auth-form-item" style="display: flex; gap: 10px;">
+                    <div style="flex: 1; position: relative;">
+                        <i class="layui-icon layui-icon-vercode auth-input-icon"></i>
+                        <input type="text" name="code" lay-verify="required" placeholder="邮箱验证码" class="auth-input">
+                    </div>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="sendAuthCode(this, 'reg')" style="height: 52px; border-color: #eee; color: #666; width: 110px; padding: 0;">获取验证码</button>
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-password auth-input-icon"></i>
+                    <input type="password" name="password" lay-verify="required" placeholder="请设置登录密码" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-password auth-input-icon"></i>
+                    <input type="password" name="repassword" lay-verify="required|confirmPass" placeholder="请确认登录密码" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <button type="button" class="layui-btn auth-submit-btn" lay-submit lay-filter="doReg">立即注册</button>
+                </div>
+                <div class="auth-footer-links">
+                    已有账号？<a onclick="switchModal('login')">去登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Retrieve Password Template -->
+    <div id="retrieve-pwd-tpl" style="display: none;">
+        <div class="auth-modal-box">
+            <div class="auth-close-btn" onclick="layer.closeAll();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            <div class="auth-modal-header">
+                <h2>找回密码</h2>
+            </div>
+            <form class="layui-form" lay-filter="retrieveForm">
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-email auth-input-icon"></i>
+                    <input type="text" name="email" id="find-email" lay-verify="required|email" placeholder="请输入注册绑定的邮箱" class="auth-input">
+                </div>
+                <div class="auth-form-item" style="display: flex; gap: 10px;">
+                    <div style="flex: 1; position: relative;">
+                        <i class="layui-icon layui-icon-vercode auth-input-icon"></i>
+                        <input type="text" name="code" lay-verify="required" placeholder="邮箱验证码" class="auth-input">
+                    </div>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="sendAuthCode(this, 'find')" style="height: 52px; border-color: #eee; color: #666; width: 110px; padding: 0;">获取验证码</button>
+                </div>
+                <div class="auth-form-item">
+                    <i class="layui-icon layui-icon-password auth-input-icon"></i>
+                    <input type="password" name="password" lay-verify="required" placeholder="请输入新密码" class="auth-input">
+                </div>
+                <div class="auth-form-item">
+                    <button class="layui-btn auth-submit-btn" lay-submit lay-filter="doRetrieve">重置密码</button>
+                </div>
+                <div class="auth-footer-links">
+                    想起来了？<a onclick="switchModal('login')">去登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    Object.assign(window.APP_CONFIG, {
+        url_search: "{:url('index/index/search')}",
+        url_doLogin: "{:url('user/doLogin')}",
+        url_doRegister: "{:url('user/doRegister')}",
+        url_doRetrievePassword: "{:url('user/doRetrievePassword')}",
+        url_submitFriendLink: "{:url('user/submitFriendLink')}",
+        url_buyFriendLink: "{:url('user/buyFriendLink')}",
+        url_sendEmailCode: "{:url('user/sendEmailCode')}",
+        url_header_recharge: "{:url('user/recharge')}",
+        url_header_checkin: "{:url('user/checkin')}",
+        url_header_pay: "{:url('index/pay/index')}",
+        is_user_logged_in: {if isset($user) && !empty($user)}true{else}false{/if}
+    });
+</script>
+<script src="/static/js/header.js"></script>
+

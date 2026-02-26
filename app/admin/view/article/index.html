@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>文章管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            文章管理
+            <button class="layui-btn layui-btn-sm layui-btn-normal" style="float: right; margin-top: 10px;" onclick="add()">发布文章</button>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-form layui-form-pane" style="margin-bottom: 10px;">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">标题</label>
+                        <div class="layui-input-inline">
+                            <input type="text" id="search-title" placeholder="模糊搜索" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn layui-btn-primary" onclick="search()"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                    </div>
+                </div>
+            </div>
+            <table id="articleTable" lay-filter="articleTable"></table>
+        </div>
+    </div>
+
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        var table, layer;
+        layui.use(['table', 'layer'], function(){
+            table = layui.table;
+            layer = layui.layer;
+            var $ = layui.$;
+
+            table.render({
+                elem: '#articleTable',
+                url: "{:url('article/index')}",
+                page: true,
+                cols: [[
+                    {field: 'id', title: 'ID', width: 80, sort: true},
+                    {field: 'title', title: '标题'},
+                    {field: 'category', title: '分类', templet: function(d){ return d.category ? d.category.name : '-'; }},
+                    {field: 'price', title: '价格', width: 100},
+                    {field: 'sales', title: '销量', width: 80},
+                    {field: 'create_time', title: '发布时间', width: 180},
+                    {fixed: 'right', title: '操作', toolbar: '#bar', width: 150}
+                ]]
+            });
+
+            table.on('tool(articleTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'del'){
+                    layer.confirm('确认删除吗？', function(index){
+                        $.post("{:url('article/delete')}", {id: data.id}, function(res){
+                            if(res.code === 1){
+                                obj.del();
+                                layer.close(index);
+                                layer.msg(res.msg, {icon: 1});
+                            }else{
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        }, 'json');
+                    });
+                } else if(obj.event === 'edit'){
+                    edit(data.id);
+                }
+            });
+        });
+
+        function search() {
+            var title = layui.$('#search-title').val();
+            table.reload('articleTable', {
+                where: {title: title},
+                page: {curr: 1}
+            });
+        }
+
+        function add() {
+            location.href = "{:url('article/form')}";
+        }
+
+        function edit(id) {
+            location.href = "{:url('article/form')}?id=" + id;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>申请友情链接 - {$config.site_name}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Inter', "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #333;
+            padding: 40px 0;
+        }
+        
+        .login-wrapper {
+            width: 100%;
+            max-width: 520px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px -12px rgba(50, 50, 93, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: visible;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: rotate(90deg);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        
+        .login-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        .layui-form-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 20px;
+            z-index: 10;
+        }
+
+        .layui-input {
+            height: 52px !important;
+            background-color: #fff !important;
+            border: 1px solid #eee !important;
+            border-radius: 6px !important;
+            padding: 0 15px 0 45px !important;
+            font-size: 15px !important;
+            transition: all 0.3s;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+        
+        .layui-input:focus {
+            border-color: #1e9fff !important;
+            box-shadow: 0 0 8px rgba(30, 159, 255, 0.1) !important;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .login-btn {
+            flex: 1;
+            height: 52px;
+            line-height: 52px;
+            background: #2196f3 !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            border: none !important;
+            font-size: 16px !important;
+            font-weight: 500 !important;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px 0 rgba(33, 150, 243, 0.39);
+        }
+        
+        .login-btn:hover {
+            background: #1976d2 !important;
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.23);
+        }
+
+        .pay-btn {
+            flex: 1;
+            height: 52px;
+            line-height: 52px;
+            background: #10b981 !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            border: none !important;
+            font-size: 16px !important;
+            font-weight: 500 !important;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+        }
+        
+        .pay-btn:hover {
+            background: #059669 !important;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.23);
+        }
+
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 14px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-box">
+            <div class="close-btn" onclick="javascript:history.back();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            
+            <div class="login-header">
+                <h2>申请友情链接</h2>
+                <p style="color: #666; margin-top: 10px; font-size: 14px;">提交您的站点信息，与我们建立连接</p>
+            </div>
+            
+            <form class="layui-form">
+                <input type="hidden" name="id" value="{$link.id|default=0}">
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-website input-icon"></i>
+                    <input type="text" name="name" lay-verify="required" placeholder="请输入网站名称 (必填)" class="layui-input" value="{$link.name|default=''}">
+                </div>
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-link input-icon"></i>
+                    <input type="url" name="url" lay-verify="required|url" placeholder="请输入网站链接 (如 https://www.example.com)" class="layui-input" value="{$link.url|default=''}">
+                </div>
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-picture input-icon"></i>
+                    <input type="url" name="logo" placeholder="网站Logo链接 (选填)" class="layui-input" value="{$link.logo|default=''}">
+                </div>
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-about input-icon"></i>
+                    <input type="text" name="description" placeholder="网站描述 (选填)" class="layui-input" value="{$link.description|default=''}">
+                </div>
+                
+                <div class="action-btns">
+                    <button class="layui-btn login-btn" lay-submit lay-filter="applyFree">免费提交 (需审核)</button>
+                    {if condition="$config.friend_link_price gt 0"}
+                    <button class="layui-btn pay-btn" lay-submit lay-filter="applyPaid">付费直通 (￥{$config.friend_link_price})</button>
+                    {/if}
+                </div>
+            </form>
+        </div>
+        <a href="/" class="home-link"><i class="layui-icon layui-icon-home"></i> 返回首页</a>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form, $ = layui.$, layer = layui.layer;
+            
+            // 免费申请
+            form.on('submit(applyFree)', function(data){
+                var loader = layer.load(2, {shade: [0.1, '#fff']});
+                $.post("{:url('user/submitFriendLink')}", data.field, function(res){
+                    layer.close(loader);
+                    if(res.code == 1){
+                        layer.msg(res.msg, {icon: 1, time: 2000}, function(){ location.href = '/'; });
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+
+            // 付费直达
+            form.on('submit(applyPaid)', function(data){
+                var loader = layer.load(2, {shade: [0.1, '#fff']});
+                $.post("{:url('user/buyFriendLink')}", data.field, function(res){
+                    layer.close(loader);
+                    if(res.code == 1){
+                        layer.msg(res.msg, {icon: 1, time: 1000}, function(){ location.href = res.url; });
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

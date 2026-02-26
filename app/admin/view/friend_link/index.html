@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>友情链接管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-card-body { padding: 15px; }
+        .toolbar { margin-bottom: 15px; display: flex; gap: 10px; }
+    </style>
+</head>
+<body style="padding: 20px; background-color: #f2f2f2;">
+
+<div class="layui-card">
+    <div class="layui-card-header">友情链接管理</div>
+    <div class="layui-card-body">
+        <div class="toolbar">
+            <button class="layui-btn layui-btn-normal layui-btn-sm" id="btnAdd"><i class="layui-icon layui-icon-add-1"></i> 添加友链</button>
+            <div class="layui-inline">
+                <select id="searchStatus" class="layui-select" style="height: 30px;">
+                    <option value="">所有状态</option>
+                    <option value="0">待审核</option>
+                    <option value="1">已通过</option>
+                    <option value="2">已拒绝</option>
+                </select>
+            </div>
+            <div class="layui-inline">
+                <input class="layui-input" id="searchKeyword" style="height: 30px; width: 200px;" placeholder="网站名称 / URL" autocomplete="off">
+            </div>
+            <button class="layui-btn layui-btn-sm" id="btnSearch"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+        </div>
+
+        <table id="dataTable" lay-filter="dataTable" class="layui-hide"></table>
+    </div>
+</div>
+
+<script type="text/html" id="actionTpl">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    {{# if(d.status == 0) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="pass">通过</a>
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="reject">拒绝</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 0){ }}
+        <span class="layui-badge layui-bg-orange">待审核</span>
+    {{# } else if(d.status == 1){ }}
+        <span class="layui-badge layui-bg-green">已通过</span>
+    {{# } else { }}
+        <span class="layui-badge">已拒绝</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="paidTpl">
+    {{# if(d.is_paid == 1){ }}
+        <span class="layui-badge layui-bg-blue" title="支付了 {{d.pay_amount}} 元">已付费 ({{d.pay_amount}})</span>
+    {{# } else { }}
+        <span class="layui-badge layui-bg-gray">免费</span>
+    {{# } }}
+</script>
+
+<script src="/static/layui/layui.js"></script>
+<script>
+layui.use(['table', 'jquery', 'layer'], function(){
+    var table = layui.table;
+    var $ = layui.jquery;
+    var layer = layui.layer;
+
+    var tableIns = table.render({
+        elem: '#dataTable',
+        url: '{:url("friend_link/index")}',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 60, align: 'center'},
+            {field: 'sort', title: '排序', width: 80, align: 'center', sort: true},
+            {field: 'name', title: '网站名称', width: 150},
+            {field: 'url', title: '链接地址', templet: '<div><a href="{{d.url}}" target="_blank" class="layui-table-link">{{d.url}}</a></div>'},
+            {field: 'user_id', title: '申请人', width: 100, align: 'center', templet: function(d){
+                return d.user ? d.user.username : '<span class="layui-badge layui-bg-cyan">后台添加</span>';
+            }},
+            {field: 'is_paid', title: '类型', width: 120, align: 'center', templet: '#paidTpl'},
+            {field: 'status', title: '状态', width: 100, align: 'center', templet: '#statusTpl'},
+            {field: 'create_time', title: '申请时间', width: 160, align: 'center'},
+            {title: '操作', width: 200, align: 'center', toolbar: '#actionTpl'}
+        ]]
+    });
+
+    // 搜索
+    $('#btnSearch').on('click', function(){
+        tableIns.reload({
+            where: {
+                status: $('#searchStatus').val(),
+                keyword: $('#searchKeyword').val()
+            },
+            page: {curr: 1}
+        });
+    });
+
+    // 添加
+    $('#btnAdd').on('click', function(){
+        layer.open({
+            type: 2,
+            title: '添加友情链接',
+            area: ['600px', '500px'],
+            content: '{:url("friend_link/add")}',
+            end: function(){
+                tableIns.reload();
+            }
+        });
+    });
+
+    // 表格操作
+    table.on('tool(dataTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'del'){
+            layer.confirm('确定要删除该友链吗？', function(index){
+                $.post('{:url("friend_link/delete")}', {id: data.id}, function(res){
+                    if(res.code == 1){
+                        layer.msg(res.msg, {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑友情链接',
+                area: ['600px', '500px'],
+                content: '{:url("friend_link/edit")}?id=' + data.id,
+                end: function(){
+                    tableIns.reload();
+                }
+            });
+        } else if(obj.event === 'pass'){
+            layer.confirm('确定通过该申请吗？', function(index){
+                $.post('{:url("friend_link/audit")}', {id: data.id, status: 1}, function(res){
+                    layer.msg(res.msg, {icon: res.code==1?1:2});
+                    if(res.code == 1) tableIns.reload();
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'reject'){
+            layer.prompt({title: '拒绝理由(可选，仅作后台备注用)', formType: 2}, function(text, index){
+                layer.close(index);
+                // 暂时不保存拒绝理由到数据库，仅修改状态
+                $.post('{:url("friend_link/audit")}', {id: data.id, status: 2}, function(res){
+                    layer.msg(res.msg, {icon: res.code==1?1:2});
+                    if(res.code == 1) tableIns.reload();
+                });
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>

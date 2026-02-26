@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>投稿审核管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <style>
+        body { padding: 20px; background-color: #f2f2f2; }
+        .layui-card { border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0,0,0,.05); }
+    </style>
+</head>
+<body>
+
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="contributionTable" lay-filter="contributionTable"></table>
+    </div>
+</div>
+
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 2){ }}
+    <span class="layui-badge layui-bg-red">已退回</span>
+    {{# } else if(d.status == 1){ }}
+    <span class="layui-badge layui-bg-green">已发布</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-blue">审核中</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="bar">
+    {{# if(d.status == 0){ }}
+    <a class="layui-btn layui-btn-xs" lay-event="approve">审核通过</a>
+    <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="reject">打回(拒审)</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script src="/static/layui/layui.js"></script>
+<script>
+layui.use(['table', 'form', 'layer', 'util'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var util = layui.util;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#contributionTable',
+        url: '{:url("contribution/index")}',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'username', title: '投稿用户', width: 120},
+            {field: 'title', title: '投稿标题', width: 250},
+            {field: 'category_name', title: '分类', width: 120, templet: function(d){ return d.category_name || '未分类'; }},
+            {field: 'price', title: '售价', width: 100},
+            {field: 'content', title: '投稿详情(正文)', minWidth: 200, templet: function(d) {
+                return '<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+d.content+'</div>';
+            }},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'reject_reason', title: '退回原因', width: 200},
+            {field: 'create_time', title: '提交时间', width: 160, templet: function(d){
+                return util.toDateString(d.create_time * 1000);
+            }},
+            {fixed: 'right', title: '操作', toolbar: '#bar', width: 260}
+        ]]
+    });
+
+    table.on('tool(contributionTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'del'){
+            layer.confirm('确认删除该投稿记录吗？', function(index){
+                $.post('{:url("contribution/delete")}', {id: data.id}, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        obj.del();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if (obj.event === 'approve'){
+            layer.confirm('确认审核通过此投稿，并自动作为真实文章发布吗？', function(index){
+                $.post('{:url("contribution/approve")}', {id: data.id}, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        table.reload('contributionTable');
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'reject'){
+            layer.prompt({
+                formType: 2,
+                value: data.reject_reason || '',
+                title: '打回原因 (必须填写)',
+                area: ['300px', '150px']
+            }, function(value, index, elem){
+                $.post('{:url("contribution/reject")}', {
+                    id: data.id,
+                    reject_reason: value
+                }, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        layer.close(index);
+                        table.reload('contributionTable');
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <div class="layui-card">
+        <div class="layui-card-header">用户管理</div>
+        <div class="layui-card-body">
+            <div class="layui-form layui-form-pane" style="margin-bottom: 10px;">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">用户名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" id="username" placeholder="用户名搜索" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn layui-btn-primary" onclick="search()"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                        <button class="layui-btn" onclick="edit(0)"><i class="layui-icon layui-icon-add-1"></i> 添加用户</button>
+                    </div>
+                </div>
+            </div>
+            <table id="userTable" lay-filter="userTable"></table>
+        </div>
+    </div>
+
+    <script type="text/html" id="statusTpl">
+        <input type="checkbox" name="status" value="{{d.id}}" lay-skin="switch" lay-text="正常|禁用" lay-filter="status" {{ d.status == 1 ? 'checked' : '' }}>
+    </script>
+    
+    <script type="text/html" id="vipTpl">
+        {{# if(d.vip_level == 4){ }}
+        <span class="layui-badge layui-bg-orange">年度VIP</span>
+        {{# } else if(d.vip_level == 3){ }}
+        <span class="layui-badge layui-bg-blue">半年VIP</span>
+        {{# } else if(d.vip_level == 2){ }}
+        <span class="layui-badge layui-bg-cyan">季度VIP</span>
+        {{# } else if(d.vip_level == 1){ }}
+        <span class="layui-badge layui-bg-green">月度VIP</span>
+        {{# } else { }}
+        <span class="layui-badge layui-bg-gray">普通用户</span>
+        {{# } }}
+    </script>
+
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        var table, layer, form;
+        layui.use(['table', 'layer', 'form'], function(){
+            table = layui.table;
+            layer = layui.layer;
+            form = layui.form;
+            var $ = layui.$;
+
+            table.render({
+                elem: '#userTable',
+                url: "{:url('user/index')}",
+                page: true,
+                cols: [[
+                    {field: 'id', title: 'ID', width: 80},
+                    {field: 'username', title: '用户名', width: 120},
+                    {field: 'nickname', title: '昵称', width: 120},
+                    {field: 'email', title: '邮箱', width: 180},
+                    {field: 'money', title: '余额', width: 100},
+                    {field: 'vip_level', title: '等级', templet: '#vipTpl', width: 100},
+                    {field: 'status', title: '状态', templet: '#statusTpl', width: 100},
+                    {field: 'create_time', title: '注册时间', width: 180},
+                    {fixed: 'right', title: '操作', toolbar: '#bar', width: 130}
+                ]]
+            });
+
+            table.on('tool(userTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'edit'){
+                    edit(data.id);
+                } else if(obj.event === 'del'){
+                    layer.confirm('确定删除该用户吗？', function(index){
+                        $.post("{:url('user/delete')}", {id: data.id}, function(res){
+                            if(res.code == 1){
+                                table.reload('userTable');
+                                layer.close(index);
+                                layer.msg(res.msg, {icon: 1});
+                            } else {
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        }, 'json');
+                    });
+                }
+            });
+
+            form.on('switch(status)', function(obj){
+                var isChecked = obj.elem.checked;
+                var statusText = isChecked ? '已开启' : '已禁用';
+                var icon = isChecked ? 1 : 2; // 1为绿色成功，2为红色失败/警告
+                
+                $.post("{:url('user/save')}", {id: this.value, status: isChecked ? 1 : 0}, function(res){
+                    if(res.code == 1) {
+                        layer.msg(statusText, {icon: icon, time: 1000});
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                        // 失败时恢复开关状态
+                        obj.elem.checked = !isChecked;
+                        form.render('checkbox');
+                    }
+                });
+            });
+        });
+
+        function edit(id) {
+            layer.open({
+                type: 2,
+                title: id > 0 ? '编辑用户' : '添加用户',
+                area: ['500px', '450px'],
+                content: "{:url('user/form')}?id=" + id,
+                end: function() { table.reload('userTable'); }
+            });
+        }
+
+        function search() {
+            var username = layui.$('#username').val();
+            table.reload('userTable', {
+                where: {username: username},
+                page: {curr: 1}
+            });
+        }
+    </script>
+</body>
+</html>

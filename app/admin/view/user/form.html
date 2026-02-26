@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户信息编辑</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <form class="layui-form layui-form-pane">
+        <input type="hidden" name="id" value="{$info.id ?? 0}">
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <input type="text" name="username" value="{$info.username ?? ''}" lay-verify="required" placeholder="请输入用户名" class="layui-input" {if isset($info.id)}readonly style="background:#f5f5f5"{/if}>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" placeholder="{if isset($info.id)}不修改请留空{else}请输入密码{/if}" class="layui-input" {if !isset($info.id)}lay-verify="required"{/if}>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">昵称</label>
+            <div class="layui-input-block">
+                <input type="text" name="nickname" value="{$info.nickname ?? ''}" placeholder="请输入昵称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" name="email" value="{$info.email ?? ''}" placeholder="请输入邮箱" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">余额</label>
+            <div class="layui-input-block">
+                <input type="number" name="money" value="{$info.money ?? '0.00'}" step="0.01" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">VIP等级</label>
+            <div class="layui-input-block">
+                <select name="vip_level">
+                    <option value="0" {if isset($info.vip_level) && $info.vip_level == 0}selected{/if}>普通用户</option>
+                    {foreach $vipLevels as $vo}
+                    <option value="{$vo.level}" {if isset($info.vip_level) && $info.vip_level == $vo.level}selected{/if}>{$vo.name}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="text-align: center; margin-top: 30px;">
+            <button class="layui-btn" lay-submit lay-filter="save">保存退出</button>
+        </div>
+    </form>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use('form', function(){
+            var form = layui.form, $ = layui.$;
+            form.on('submit(save)', function(data){
+                $.post("{:url('user/save')}", data.field, function(res){
+                    if(res.code == 1){
+                        parent.layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                            var index = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(index);
+                        });
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

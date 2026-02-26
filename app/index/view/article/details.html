@@ -1,0 +1,380 @@
+{include file="layout/header" /}
+<link rel="stylesheet" href="/static/css/article-premium.css?v=1.5">
+<link rel="stylesheet" href="/static/css/article_details.css">
+
+<div class="container article-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-box">
+        <span class="layui-breadcrumb" lay-separator=">">
+            <a href="/">首页</a>
+            <a href="/?cat={$article.category_id}.html">{$article.category.name}</a>
+            <a><cite>正文</cite></a>
+        </span>
+    </div>
+
+    <div class="layui-row layui-col-space30">
+        <!-- Main Content -->
+        <div class="layui-col-md9">
+            
+            <!-- Title & Meta (V5 Style) -->
+            <div class="article-header-v5">
+                <h1 class="article-title-v5">{$article.title}</h1>
+                <div class="article-meta-v5">
+                    <div class="meta-item"><i class="layui-icon layui-icon-time"></i> {$article.create_time|date='Y-m-d'}</div>
+                    <div class="meta-item"><i class="layui-icon layui-icon-app"></i> {$article.category.name}</div>
+                    <div class="meta-item"><i class="layui-icon layui-icon-fire"></i> {$article.views}</div>
+                    <div class="meta-item"><i class="layui-icon layui-icon-dialogue"></i> {$comments->total()}</div>
+                </div>
+            </div>
+
+            <!-- Tabs (V5 Style) -->
+            <div class="tabs-v5">
+                <div class="tab-btn-v5 active" onclick="switchTab(this, 'detail')">
+                    <i class="layui-icon layui-icon-file-text"></i> <span class="hidden-xs">详情介绍</span>
+                </div>
+                <div class="tab-btn-v5" onclick="switchTab(this, 'faq')">
+                    <i class="layui-icon layui-icon-question"></i> <span class="hidden-xs">常见问题</span>
+                </div>
+                <div class="tab-btn-v5" onclick="switchTab(this, 'comments')" id="tab-comments">
+                    <i class="layui-icon layui-icon-dialogue"></i> <span class="hidden-xs">评论建议</span>
+                </div>
+            </div>
+
+            <!-- Content: Detail -->
+            <div id="content-detail" class="tab-content-block">
+                
+                <!-- Video/Media (Removed Title Overlay) -->
+                <!-- Video/Media (Removed Title Overlay) -->
+                {if condition="isset($article.video_url) AND !empty($article.video_url)"}
+                <div class="article-media-box" style="margin-bottom: 20px;">
+                    <video src="{$article.video_url}" controls style="width:100%; height:100%; object-fit:contain;"></video>
+                </div>
+                {/if}
+
+                <!-- Position 2 Ads (Above Content) -->
+                {if condition="(!isset($config.ad_global_status) || $config.ad_global_status == 1) && (!isset($config.ad_pos_2_status) || $config.ad_pos_2_status == 1) && (!isset($config.ad_vip_exempt) || $config.ad_vip_exempt == 0 || !isset($user.vip_level) || $user.vip_level == 0)"}
+                {volist name="ads_pos2" id="ad"}
+                <div class="ad-container" style="margin-bottom: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    {if $ad.type == 1}
+                    <a href="{$ad.link_url}" target="_blank"><img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;"></a>
+                    {else}{$ad.js_code|raw}{/if}
+                </div>
+                {/volist}
+                {/if}
+
+                <!-- Detail Box -->
+                <div class="content-box">
+                     <div class="intro-quote">
+                          <i class="layui-icon layui-icon-quote-left" style="font-size:20px; color:#ccc; position:absolute; top:10px; left:10px;"></i>
+                          <p>{$article.description|default=$article.title . ' - 本站优质资源，欢迎下载体验。'}</p>
+                     </div>
+                     <div class="article-content" style="font-size:16px; line-height:1.8; color:#444;">
+                         {if condition="$can_view"}
+                             {$article.content|raw}
+                         {/if}
+                     </div>
+                     
+                     <!-- Position 4 Ads (Within Content) -->
+                     {if condition="(!isset($config.ad_global_status) || $config.ad_global_status == 1) && (!isset($config.ad_pos_4_status) || $config.ad_pos_4_status == 1) && (!isset($config.ad_vip_exempt) || $config.ad_vip_exempt == 0 || !isset($user.vip_level) || $user.vip_level == 0)"}
+                     {volist name="ads_pos4" id="ad"}
+                     <div class="ad-container" style="margin: 20px 0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                          {if $ad.type == 1}
+                          <a href="{$ad.link_url}" target="_blank"><img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;"></a>
+                          {else}{$ad.js_code|raw}{/if}
+                     </div>
+                     {/volist}
+                     {/if}
+
+                     <div class="locked-content-box">
+                          {if condition="!$can_view"}
+                              <i class="layui-icon layui-icon-password lock-icon"></i>
+                              <h3 style="font-size:18px; font-weight:700; color:#ff4444; margin-bottom:10px;">
+                                  <i class="layui-icon layui-icon-locked"></i> 本内容需权限查看
+                              </h3>
+                              <div style="margin-bottom:25px; color:#666;">
+                                  {if condition="$article.price > 0"}
+                                     需要支付 <span style="color:#ff4444; font-weight:700;">{$article.price}元</span> 或 <span style="color:#dda346; font-weight:700;">VIP会员</span> 免费查看
+                                  {else /}
+                                      本资源为免费资源，请登录后查看
+                                  {/if}
+                              </div>
+                              <button class="buy-access-btn" onclick="buy()"><i class="layui-icon layui-icon-cart"></i> 购买立即查看</button>
+                              <div style="margin-top:15px; font-size:12px; color:#999;">
+                                  <a href="/user/index.html?tab=vip.html" target="_blank" style="color:#666; text-decoration:underline;">开通VIP会员免费下载所有资源 ></a>
+                              </div>
+                          {else /}
+                              <div style="background:#f0f9eb; color:#67c23a; padding:15px; border-radius:8px; display:inline-block; border:1px solid #e1f3d8;">
+                                  <i class="layui-icon layui-icon-ok-circle"></i> 您已拥有查看权限
+                                  <div style="margin-top:10px;">
+                                      下载地址：<a href="{:url('article/download', ['id'=>$article.id])}" target="_blank" style="color:#409eff; text-decoration:underline;">点击下载</a>
+                                      <br>提取码：{$article.resource_pwd|default='无'}
+                                  </div>
+                              </div>
+                          {/if}
+                     </div>
+                                                               
+                     <!-- Action Bar -->
+                     <div class="action-bar-v5">
+                        <div class="author-info-v5">
+                            {if isset($article.user) && !empty($article.user)}
+                                {if !empty($article.user.avatar)}
+                                    <img src="{$article.user.avatar}" class="author-avatar-v5">
+                                {else /}
+                                    <div class="author-avatar-v5 icon-avatar" style="background: #f1f2f5; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #999;">
+                                        <i class="layui-icon layui-icon-username"></i>
+                                    </div>
+                                {/if}
+                                <div>
+                                    <div style="font-weight:700; font-size:14px;">{$article.user.nickname|default=$article.user.username|default='管理员'}</div>
+                                </div>
+                            {else /}
+                                <div class="author-avatar-v5 icon-avatar" style="background: #f1f2f5; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #999;">
+                                    <i class="layui-icon layui-icon-username"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:14px;">管理员</div>
+                                </div>
+                            {/if}
+                        </div>
+                        <div class="action-buttons-v5">
+                            <div class="action-btn btn-share" onclick="shareArticle()"><i class="layui-icon layui-icon-share"></i> 分享</div>
+                            <div class="action-btn btn-collect {if $is_collected}active{/if}" onclick="collectArticle(this)" data-id="{$article.id}">
+                                <i class="layui-icon {if $is_collected}layui-icon-star-fill{else}layui-icon-star{/if}"></i> 
+                                <span>{if $is_collected}已收藏{else}收藏{/if}</span>
+                            </div>
+                            <div class="action-btn btn-like {if $is_liked}active{/if}" onclick="likeArticle(this)" data-id="{$article.id}">
+                                <i class="layui-icon {if $is_liked}layui-icon-praise{else}layui-icon-praise{/if}"></i> 
+                                <span>点赞({$like_count})</span>
+                            </div>
+                        </div>
+                     </div>
+
+                     <!-- Position 4 Ads -->
+                     {if condition="(!isset($config.ad_global_status) || $config.ad_global_status == 1) && (!isset($config.ad_pos_4_status) || $config.ad_pos_4_status == 1) && (!isset($config.ad_vip_exempt) || $config.ad_vip_exempt == 0 || !isset($user.vip_level) || $user.vip_level == 0)"}
+                     {volist name="ads_pos4" id="ad"}
+                     <div class="ad-container" style="margin-top: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                          {if $ad.type == 1}
+                          <a href="{$ad.link_url}" target="_blank"><img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;"></a>
+                          {else}{$ad.js_code|raw}{/if}
+                     </div>
+                     {/volist}
+                     {/if}
+                </div>
+            </div>
+            
+            <!-- Prev/Next Navigation (Redesigned) -->
+            <div class="nav-prev-next">
+                {if $prev_article}
+                <a href="/article/details.html?id={$prev_article.id}.html" class="nav-item nav-prev">
+                    <span class="nav-arrow"><i class="layui-icon layui-icon-left"></i></span>
+                    <div class="nav-text-container">
+                        <div class="nav-label" style="align-items: flex-end; text-align: right;">上一篇</div>
+                        <div class="nav-title">{$prev_article.title}</div>
+                    </div>
+                </a>
+                {else /}
+                <div class="nav-item nav-prev disabled">
+                    <div class="nav-text-container">
+                        <div class="nav-label" style="align-items: flex-end; text-align: right;">上一篇</div>
+                        <div class="nav-title" style="align-items: flex-end; text-align: right;">没有了</div>
+                    </div>
+                </div>
+                {/if}
+                
+                {if $next_article}
+                <a href="/article/details.html?id={$next_article.id}.html" class="nav-item nav-next">
+                    <div class="nav-text-container">
+                        <div class="nav-label">下一篇</div>
+                        <div class="nav-title">{$next_article.title}</div>
+                    </div>
+                    <span class="nav-arrow"><i class="layui-icon layui-icon-right"></i></span>
+                </a>
+                {else /}
+                <div class="nav-item nav-next disabled">
+                    <div class="nav-text-container">
+                        <div class="nav-label">下一篇</div>
+                        <div class="nav-title">没有了</div>
+                    </div>
+                </div>
+                {/if}
+            </div>
+            
+            <!-- FAQ (Hidden Default) -->
+            <div id="content-faq" class="tab-content-block" style="display:none;">
+                <div class="content-box">
+                    <div class="section-title">常见问题</div>
+                    <div style="line-height:2; padding: 20px;">
+                        <p><strong>Q: 购买后如何下载？</strong><br>A: 支付成功后页面自动刷新，点击“立即下载”即可。</p>
+                        <p><strong>Q: 资源链接失效怎么办？</strong><br>A: 请联系客服或在评论区留言反馈，我们将尽快修复。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comments (Hidden Default) -->
+            <div id="content-comments" class="tab-content-block" style="display:none;">
+                <div class="content-box" style="padding: 30px;">
+                     <!-- Keep existing comment code -->
+                     <div class="comment-section-header"><i class="layui-icon layui-icon-dialogue"></i> 评论({$comments->total()})</div>
+                     <div class="comment-input-box">
+                        <textarea id="comment_content" class="comment-textarea" placeholder="请输入评论内容..."></textarea>
+                        <div class="comment-actions">
+                            <div style="color:#f56c6c; background:#fef0f0; padding:2px 8px; font-size:12px; border-radius:2px;">提示：请文明发言</div>
+                            <button class="submit-btn" onclick="submitComment()">提交评论</button>
+                        </div>
+                    </div>
+                    <div class="comment-list">
+                        {volist name="comments" id="vo" empty="<div style='text-align:center;color:#999;padding:20px;'>暂无评论，快来抢沙发吧~</div>"}
+                        <div class="comment-item">
+                            <div class="c-avatar"><div class="comment-user-icon"><i class="layui-icon layui-icon-username"></i></div></div>
+                            <div class="c-content">
+                                <div class="c-user-info">
+                                    <span class="c-username">{$vo.user.username|default='匿名用户'}</span>
+                                    {if condition="isset($vo.user.vip_level) AND $vo.user.vip_level > 0"}
+                                    <span class="c-badge-vip">VIP</span>
+                                    {/if}
+                                    <span class="c-badge-user"><i class="layui-icon layui-icon-diamond" style="font-size:10px;"></i> 普通用户</span>
+                                </div>
+                                <div class="c-text">{$vo.content}</div>
+                                <div class="c-meta"><span>{$vo.create_time|date='Y-m-d H:i:s'}</span><a href="javascript:;" style="color:#666;">回复</a></div>
+                            </div>
+                        </div>
+                        {/volist}
+                    </div>
+                    <div class="pagination-box">{$comments|raw}</div>
+                </div>
+            </div>
+
+            <!-- Related Articles -->
+            <div class="content-box" style="margin-top: 30px;">
+                <div class="section-title"><i class="layui-icon layui-icon-link"></i> 相关推荐</div>
+                <div class="related-grid-v5">
+                     {volist name="related_articles" id="vo" empty=""}
+                     <div class="related-card-v5">
+                         <a href="/article/details.html?id={$vo.id}.html">
+                             <img src="{$vo.cover_url|default=$config.article_default_image|default='/static/images/default.jpg'}" class="related-thumb" alt="{$vo.title}">
+                         </a>
+                         <div class="related-info">
+                             <div class="related-title">
+                                 <a href="/article/details.html?id={$vo.id}.html" style="color:#333;">{$vo.title}</a>
+                             </div>
+                             <div style="font-size:12px; color:#999;">
+                                 <i class="layui-icon layui-icon-time"></i> {$vo.create_time|date='Y-m-d'}
+                             </div>
+                         </div>
+                     </div>
+                     {/volist}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="layui-col-md3">
+            <!-- Author Widget -->
+            <div class="premium-card author-widget">
+                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                     {if isset($article.user) && !empty($article.user)}
+                         {if !empty($article.user.avatar)}
+                            <img src="{$article.user.avatar}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                         {else /}
+                            <div style="width: 60px; height: 60px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #999;">
+                                <i class="layui-icon layui-icon-username"></i>
+                            </div>
+                         {/if}
+                         <div style="text-align:left;">
+                             <div class="author-name">{$article.user.nickname|default=$article.user.username|default='管理员'}</div>
+                             <span class="author-badge" style="background:#f0f9eb; color:#67c23a; border-color:#e1f3d8;">🌟 优质创作者</span>
+                         </div>
+                     {else /}
+                         <div style="width: 60px; height: 60px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #666;">
+                             <i class="layui-icon layui-icon-username"></i>
+                         </div>
+                         <div style="text-align:left;">
+                             <div class="author-name">管理员</div>
+                             <span class="author-badge">👑 官方团队</span>
+                         </div>
+                     {/if}
+                 </div>
+                <div class="author-stats">
+                    <div class="stat-item"><span class="stat-num">{$author_articles_count}</span><span class="stat-label">文章</span></div>
+                    <div class="stat-item"><span class="stat-num">{$author_comments_count}</span><span class="stat-label">评论</span></div>
+                    <div class="stat-item"><span class="stat-num">{$author_fans_count}</span><span class="stat-label">粉丝</span></div>
+                </div>
+                <div style="margin-top:20px;">
+                    <a href="#" style="font-size:12px; color:#999;">查看作者其他文章 ></a>
+                </div>
+            </div>
+
+            <!-- Purchase Widget -->
+            <div class="purchase-widget premium-card">
+                <div class="price-header"><i class="layui-icon layui-icon-diamond"></i> 资源售价</div>
+                <div class="price-tag-wrap">
+                    <div class="price-item" style="border-right:1px solid #e6d3b3;">
+                        <div class="vip-free-badge">VIP会员</div>
+                        <div style="color: #d4a356; font-weight:700;">{if condition="$article.price > 0"}折扣/免{else /}免费{/if}</div>
+                    </div>
+                     <div class="price-item">
+                        <div class="vip-free-badge">价格</div>
+                        <div class="price-val-lg">{$article.price}<span style="font-size:12px;">元</span></div>
+                    </div>
+                </div>
+                <div class="buy-actions">
+                    {if condition="$can_view"}
+                         <button class="btn-block-danger" style="background:#00c851; cursor:default;">
+                             <i class="layui-icon layui-icon-ok"></i> 已购买/拥有权限
+                         </button>
+                    {else /}
+                        <button class="btn-block-danger" onclick="buy()">
+                            <i class="layui-icon layui-icon-cart"></i> 立即购买权限
+                        </button>
+                    {/if}
+                    <div class="buy-info-text"><i class="layui-icon layui-icon-auz"></i> 已有 {$article.sales|default=0} 人购买下载</div>
+                    <div class="buy-info-text">遇到问题？<a href="#" style="text-decoration:underline;">联系客服反馈</a></div>
+                </div>
+            </div>
+
+            <!-- Ranking List -->
+            <div class="premium-card" style="padding:20px;">
+                <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px; font-weight:700;">热门排行榜</div>
+                 {volist name="hot_articles" id="hot" key="k"}
+                <div class="rank-list-item">
+                    <span class="rank-num" {if condition="$k <= 3"}style="background:#ff4444; color:#fff;"{/if}>{$k}</span>
+                    <a href="/article/details.html?id={$hot.id}.html" style="color:#666; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px;">{$hot.title}</a>
+                </div>
+                 {/volist}
+            </div>
+
+            <!-- Position 3 Ads (Sidebar Ranking Below) -->
+            {if condition="(!isset($config.ad_global_status) || $config.ad_global_status == 1) && (!isset($config.ad_pos_3_status) || $config.ad_pos_3_status == 1) && (!isset($config.ad_vip_exempt) || $config.ad_vip_exempt == 0 || !isset($user.vip_level) || $user.vip_level == 0)"}
+            {volist name="ads_pos3" id="ad"}
+            <div class="ad-container" style="margin-top: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                {if $ad.type == 1}
+                <a href="{$ad.link_url}" target="_blank">
+                    <img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;">
+                </a>
+                {else}
+                {$ad.js_code|raw}
+                {/if}
+            </div>
+            {/volist}
+            {/if}
+        </div>
+    </div>
+</div>
+
+<script>
+    var isLogin = {if isset($user) && !empty($user)}true{else}false{/if};
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    Object.assign(window.APP_CONFIG, {
+        article_id: "{$article.id}",
+        url_article_buy: "{:url('article/buy')}",
+        url_pay_index: "{:url('index/pay/index')}",
+        url_article_submitComment: "{:url('article/submitComment')}",
+        url_article_share: "{:url('article/share')}",
+        url_article_toggleFavorite: "{:url('article/toggleFavorite')}",
+        url_article_like: "{:url('article/like')}"
+    });
+</script>
+<script src="/static/js/article_details.js"></script>
+
+{include file="layout/footer" /}

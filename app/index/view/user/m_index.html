@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>个人中心</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        html { background: #e0e0e0; }
+        body { 
+            margin: 0 auto; padding: 0; 
+            max-width: 500px; /* Constrain for desktop preview */
+            min-height: 100vh;
+            background: #f5f7fa; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            color: #333;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        /* App Top Navbar for Subpages */
+        .m-navbar { 
+            height: 48px; 
+            background: #fff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; 
+            z-index: 100; 
+            padding-top: env(safe-area-inset-top); 
+            box-sizing: content-box; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .m-navbar-back { 
+            position: absolute; 
+            left: 0; 
+            bottom: 0; 
+            height: 48px; 
+            width: 48px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px; 
+            color: #333; 
+        }
+        .m-navbar-title { font-size: 17px; font-weight: 600; color: #333; }
+        .m-subpage-container { padding-top: calc(48px + env(safe-area-inset-top)); padding-bottom: 20px; }
+
+        /* Dashboard User Card */
+        .m-header-card { 
+            background: linear-gradient(135deg, #448ef6 0%, #1e62d0 100%); 
+            padding: calc(30px + env(safe-area-inset-top)) 20px 45px; 
+            color: #fff; 
+            position: relative; 
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 8px 20px rgba(68, 142, 246, 0.2);
+            overflow: hidden;
+        }
+        .m-header-card::after {
+            content: ''; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px;
+            background: rgba(255,255,255,0.08); border-radius: 50%;
+        }
+        .m-user-info-row { display: flex; align-items: center; position: relative; z-index: 2; }
+        .m-avatar { 
+            width: 64px; height: 64px; border-radius: 50%; background: #fff; 
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            margin-right: 15px; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .m-avatar i { font-size: 38px; color: #448ef6; }
+        .m-name-box { flex: 1; }
+        .m-name { font-size: 20px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;}
+        .m-vip-badge { font-size: 11px; background: linear-gradient(to right, #f6d365, #fda085); color: #8c5a19; padding: 2px 8px; border-radius: 12px; font-weight: bold;}
+        .m-email { font-size: 13px; opacity: 0.9; }
+
+        /* Dashboard Stats */
+        .m-stats-card {
+            background: #fff; border-radius: 12px; margin: -25px 15px 15px; 
+            padding: 18px 0; display: flex; position: relative; z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .m-stat-item { flex: 1; text-align: center; position: relative; }
+        .m-stat-item:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 20%; height: 60%; width: 1px; background: #f0f0f0; }
+        .m-stat-num { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 4px; }
+        .m-stat-label { font-size: 12px; color: #888; }
+
+        /* Dashboard Menu Options */
+        .m-menu-group { background: #fff; margin: 0 15px 15px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .m-menu-item { display: flex; align-items: center; padding: 18px 15px; position: relative; color: #333; text-decoration: none; }
+        .m-menu-item:active { background: #f9f9f9; }
+        .m-menu-item:not(:last-child)::after { content: ''; position: absolute; bottom: 0; left: 50px; right: 0; height: 1px; background: #f0f0f0; }
+        .m-menu-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 16px; color: #fff;}
+        .m-menu-text { flex: 1; font-size: 15px; }
+        .m-menu-arrow { color: #ccc; font-size: 14px; }
+
+        /* Bottom Nav */
+        .m-bottom-nav-spacer { height: 65px; }
+        .m-bottom-nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; height: 55px; 
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); display: flex; z-index: 100; 
+            padding-bottom: env(safe-area-inset-bottom);
+            border-top: 1px solid #f0f0f0;
+        }
+        .m-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; text-decoration: none; transition: color 0.2s;}
+        .m-nav-item i { font-size: 24px; margin-bottom: 2px; }
+        .m-nav-item span { font-size: 10px; }
+        .m-nav-item.active { color: #448ef6; }
+        
+        /* Logout Btn */
+        .m-logout-btn { display: block; margin: 20px 15px; background: #fff; color: #f56c6c; text-align: center; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-decoration: none;}
+
+        /* Subpage Cards */
+        .m-card { background: #fff; border-radius: 12px; margin: 15px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .m-empty { text-align: center; padding: 60px 0; color: #999; }
+        .m-empty i { font-size: 50px; color: #e0e0e0; display: block; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+{if $tab == 'index'}
+    <!-- ================== APP 首页 (Dashboard) ================== -->
+    <div class="m-header-card">
+        <div class="m-user-info-row">
+            <div class="m-avatar">
+                {if !empty($user.avatar)}<img src="{$user.avatar}" style="width:100%; height:100%; object-fit:cover;">
+                {else}<i class="layui-icon layui-icon-username"></i>{/if}
+            </div>
+            <div class="m-name-box">
+                <div class="m-name">
+                    {$user.nickname|default='User_'.$user.id}
+                    {if $user.vip_level > 0}
+                    <span class="m-vip-badge">VIP {$user.vip_level}</span>
+                    {/if}
+                </div>
+                <div class="m-email">{$user.email}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="m-stats-card">
+        <div class="m-stat-item">
+            <div class="m-stat-num">{$user.coins|default=0}</div>
+            <div class="m-stat-label">站内硬币</div>
+        </div>
+        <div class="m-stat-item">
+            <div class="m-stat-num">{$user.vip_level > 0 ? (isset($vip_limit) ? $vip_limit : '0') : (isset($common_limit) ? $common_limit : '0')}</div>
+            <div class="m-stat-label">今日额度</div>
+        </div>
+        <div class="m-stat-item">
+            <div class="m-stat-num">{$today_download_count|default=0}</div>
+            <div class="m-stat-label">今日已用</div>
+        </div>
+    </div>
+
+    <div class="m-menu-group">
+        <a href="/user/index.html?tab=profile.html&mobile=1" class="m-menu-item">
+            <div class="m-menu-icon" style="background: linear-gradient(135deg, #5c82ff, #3b5bdb);"><i class="layui-icon layui-icon-set-sm"></i></div>
+            <div class="m-menu-text">基本资料设置</div>
+            <i class="layui-icon layui-icon-right m-menu-arrow"></i>
+        </a>
+    </div>
+
+    <div class="m-menu-group">
+        <a href="/user/index.html?tab=orders.html&mobile=1" class="m-menu-item">
+            <div class="m-menu-icon" style="background: linear-gradient(135deg, #ff8e52, #f56c23);"><i class="layui-icon layui-icon-form"></i></div>
+            <div class="m-menu-text">我的订单</div>
+            <i class="layui-icon layui-icon-right m-menu-arrow"></i>
+        </a>
+        <a href="/user/index.html?tab=friend_links.html&mobile=1" class="m-menu-item">
+            <div class="m-menu-icon" style="background: linear-gradient(135deg, #4bd285, #17b961);"><i class="layui-icon layui-icon-link"></i></div>
+            <div class="m-menu-text">管理友情链接</div>
+            <i class="layui-icon layui-icon-right m-menu-arrow"></i>
+        </a>
+        <a href="/user/index.html?tab=downloads.html&mobile=1" class="m-menu-item">
+            <div class="m-menu-icon" style="background: linear-gradient(135deg, #ff6b81, #ff4757);"><i class="layui-icon layui-icon-download-circle"></i></div>
+            <div class="m-menu-text">我的下载记录</div>
+            <i class="layui-icon layui-icon-right m-menu-arrow"></i>
+        </a>
+        <a href="/user/index.html?tab=favorites.html&mobile=1" class="m-menu-item">
+            <div class="m-menu-icon" style="background: linear-gradient(135deg, #fbc531, #e1b12c);"><i class="layui-icon layui-icon-star"></i></div>
+            <div class="m-menu-text">我的文章收藏</div>
+            <i class="layui-icon layui-icon-right m-menu-arrow"></i>
+        </a>
+    </div>
+
+    <a href="{:url('index/User/logout')}" class="m-logout-btn">退出登录</a>
+
+    <div class="m-bottom-nav-spacer"></div>
+
+    <!-- APP 底部导航栏 -->
+    <div class="m-bottom-nav">
+        <a href="/" class="m-nav-item">
+            <i class="layui-icon layui-icon-home"></i><span>首页</span>
+        </a>
+        <a href="javascript:;" class="m-nav-item" onclick="showMobileCategories()">
+            <i class="layui-icon layui-icon-app"></i><span>栏目</span>
+        </a>
+        <a href="/user/index.html?mobile=1" class="m-nav-item active">
+            <i class="layui-icon layui-icon-user"></i><span>我的</span>
+        </a>
+    </div>
+
+{else}
+    <!-- ================== APP 子页面 (Subpages) ================== -->
+    <!-- 顶部导航条 -->
+    <div class="m-navbar">
+        <a href="/user/index.html?tab=index.html&mobile=1" class="m-navbar-back"><i class="layui-icon layui-icon-left"></i></a>
+        <div class="m-navbar-title">
+            {if $tab == 'profile'}资料修改
+            {elseif $tab == 'orders'}我的订单
+            {elseif $tab == 'friend_links'}我的友链
+            {elseif $tab == 'downloads'}下载记录
+            {elseif $tab == 'favorites'}我的收藏
+            {/if}
+        </div>
+    </div>
+
+    <div class="m-subpage-container">
+        
+        {if $tab == 'profile'}
+            <!-- 资料修改 -->
+            <div class="m-card">
+                <form class="layui-form" lay-filter="profileForm">
+                    <div style="font-size:14px; color:#555; margin-bottom:8px;">昵称</div>
+                    <input type="text" name="nickname" value="{$user.nickname}" class="layui-input" style="border-radius:8px; margin-bottom:15px; height:44px;">
+                    
+                    <div style="font-size:14px; color:#555; margin-bottom:8px;">邮箱</div>
+                    <input type="email" name="email" value="{$user.email}" disabled class="layui-input layui-disabled" style="border-radius:8px; background:#f9f9f9; height:44px; color:#999;">
+                    <div style="font-size:12px; color:#999; margin:6px 0 25px;">* 邮箱也是登录账号，不可修改</div>
+
+                    <button class="layui-btn layui-btn-normal layui-btn-fluid" lay-submit lay-filter="saveProfile" style="border-radius:8px; height:44px; font-size:15px;">保存资料</button>
+                </form>
+            </div>
+            
+            <div class="m-card">
+                <form class="layui-form" lay-filter="pwdForm">
+                    <div style="font-size:14px; color:#555; margin-bottom:8px;">新密码</div>
+                    <input type="password" name="password" placeholder="若不修改密码请留空" class="layui-input" style="border-radius:8px; margin-bottom:20px; height:44px;">
+                    <button class="layui-btn layui-btn-warm layui-btn-fluid" lay-submit lay-filter="savePwd" style="border-radius:8px; height:44px; font-size:15px;">修改密码</button>
+                </form>
+            </div>
+
+        {elseif $tab == 'orders'}
+            <!-- 订单列表 -->
+            {volist name="list" id="vo"}
+            <div class="m-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f5f5f5; padding-bottom:12px;">
+                    <div style="font-size:12px; color:#999; font-family:monospace;">订单号: {$vo.out_trade_no}</div>
+                    <div>
+                        {if $vo.status == 1}<span class="layui-badge layui-bg-green" style="font-size:11px; padding:2px 6px;">已付款</span>
+                        {elseif $vo.status == 0}
+                            {if isset($vo.is_expired) && $vo.is_expired}<span class="layui-badge layui-bg-gray" style="font-size:11px; padding:2px 6px;">已失效</span>
+                            {else}<span class="layui-badge layui-bg-blue" style="font-size:11px; padding:2px 6px;">待付款</span>{/if}
+                        {else}<span class="layui-badge layui-bg-gray" style="font-size:11px; padding:2px 6px;">已取消</span>{/if}
+                    </div>
+                </div>
+                <div style="font-size:16px; font-weight:bold; color:#333; margin-bottom:12px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                    {$vo.title|default='其他服务消费'}
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                    <div>
+                        <div style="font-size:20px; color:#f56c6c; font-weight:bold;"><span style="font-size:14px;">￥</span>{$vo.price|default=0.00}</div>
+                        <div style="font-size:12px; color:#999; margin-top:4px;">下单时间: {$vo.create_time|date='Y-m-d H:i'}</div>
+                    </div>
+                    {if $vo.status == 0 && (!isset($vo.is_expired) || !$vo.is_expired)}
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span style="font-size:13px; color:#e6a23c; font-weight:bold" class="order-countdown-text" data-seconds="{$vo.expire_seconds|default=0}"></span>
+                        <a href="{:url('pay/index', ['order_id' => $vo.out_trade_no])}" class="layui-btn layui-btn-sm layui-btn-danger" style="border-radius:20px; padding:0 15px; height:32px; line-height:32px;">去付款</a>
+                        <button class="layui-btn layui-btn-primary layui-btn-sm" style="border-radius:20px; padding:0 12px; color:#999; height:32px; line-height:32px;" onclick="cancelOrder('{$vo.out_trade_no}')">取消</button>
+                    </div>
+                    {/if}
+                </div>
+            </div>
+            {/volist}
+            {if condition="$list->isEmpty()"}
+            <div class="m-empty"><i class="layui-icon layui-icon-form"></i>暂无订单记录</div>
+            {/if}
+            <div style="text-align:center; padding: 10px 0;">{$list|raw}</div>
+
+        {elseif $tab == 'friend_links'}
+            <!-- 友链列表 -->
+            <div style="padding:0 15px; margin-bottom:15px; text-align:right;">
+                <button class="layui-btn layui-btn-normal" style="border-radius:20px; padding:0 20px; height:36px; line-height:36px; font-size:14px; box-shadow: 0 4px 10px rgba(30,159,255,0.2);" onclick="showMobileFriendLinkApply()">+ 申请新友链</button>
+            </div>
+            {volist name="list" id="vo"}
+            <div class="m-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
+                    <div style="font-size:17px; font-weight:600; color:#333; display:flex; align-items:center; gap:6px;">
+                        {$vo.name}
+                        {if $vo.is_paid == 1}<span class="layui-badge layui-bg-orange" style="transform:scale(0.8); transform-origin:left; border-radius:4px;">付费直通</span>{/if}
+                    </div>
+                    <div>
+                        {if isset($vo.is_expired) && $vo.is_expired}<span class="layui-badge layui-bg-gray">已过期</span>
+                        {elseif $vo.status == 1}<span class="layui-badge layui-bg-green">已通过</span>
+                        {elseif $vo.status == 0}<span class="layui-badge layui-bg-blue">待审核</span>
+                        {else}<span class="layui-badge layui-bg-red">已拒绝</span>{/if}
+                    </div>
+                </div>
+                <div style="font-size:14px; color:#448ef6; margin-bottom:15px; word-break:break-all; background:#f0f7ff; padding:10px; border-radius:8px;">
+                    <i class="layui-icon layui-icon-link"></i> <a href="{$vo.url}" target="_blank" style="color:inherit; text-decoration:none;">{$vo.url}</a>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #eee; padding-top:12px; font-size:12px; color:#999; line-height:1.6;">
+                    <div>申请时间: {$vo.create_time|date='Y-m-d'}<br>到期时间: <span style="color:#e6a23c;">{$vo.expire_date|default='长期有效'}</span></div>
+                    {if $vo.status == 0 || $vo.status == 2}
+                    <button class="layui-btn layui-btn-primary layui-btn-sm" style="border-radius:20px; color:#448ef6; border-color:#448ef6; height:30px; line-height:30px; padding:0 12px;" onclick="showMobileFriendLinkApply({$vo.id})">修改重新申请</button>
+                    {/if}
+                </div>
+            </div>
+            {/volist}
+            {if condition="$list->isEmpty()"}
+            <div class="m-empty"><i class="layui-icon layui-icon-link"></i>暂无友情链接</div>
+            {/if}
+            <div style="text-align:center; padding: 10px 0;">{$list|raw}</div>
+
+        {elseif $tab == 'downloads'}
+            <!-- 下载记录 -->
+            {volist name="list" id="vo"}
+            <div class="m-card">
+                <div style="font-size:16px; font-weight:bold; color:#333; margin-bottom:12px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                    <a href="/article/details.html?id={$vo.article_id}.html" style="color:inherit; text-decoration:none;">{$vo.title|default='已删除文章'}</a>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; color:#999; align-items:center;">
+                    <span><i class="layui-icon layui-icon-time" style="font-size:12px; margin-right:3px;"></i> {$vo.create_time|date='Y-m-d H:i'}</span>
+                    <span style="background:#fef0f0; color:#f56c6c; padding:3px 8px; border-radius:4px; font-size:12px;">总计消耗: <strong>{$vo.cost_coins|default=0}</strong> 币</span>
+                </div>
+            </div>
+            {/volist}
+            {if condition="$list->isEmpty()"}
+            <div class="m-empty"><i class="layui-icon layui-icon-download-circle"></i>您还没有下载过任何资源</div>
+            {/if}
+            <div style="text-align:center; padding: 10px 0;">{$list|raw}</div>
+
+        {elseif $tab == 'favorites'}
+            <!-- 我的收藏 -->
+            {volist name="list" id="vo"}
+            <div class="m-card" style="display:flex; gap:15px; align-items:center; padding:15px;">
+                {if !empty($vo.thumbnail)}
+                <img src="{$vo.thumbnail}" style="width:100px; height:75px; object-fit:cover; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+                {else}
+                <div style="width:100px; height:75px; background:#f0f2f5; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#bbbbbb; font-size:13px;">暂无图片</div>
+                {/if}
+                <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; height:75px;">
+                    <div style="font-size:15px; font-weight:bold; color:#333; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        <a href="/article/details.html?id={$vo.article_id}.html" style="color:inherit; text-decoration:none;">{$vo.title|default='文章已被删除'}</a>
+                    </div>
+                    <div style="font-size:12px; color:#999; display:flex; align-items:center;">
+                        <i class="layui-icon layui-icon-time" style="margin-right:4px;"></i> 收藏于 {$vo.create_time|date='Y-m-d'}
+                    </div>
+                </div>
+            </div>
+            {/volist}
+            {if condition="$list->isEmpty()"}
+            <div class="m-empty"><i class="layui-icon layui-icon-star"></i>你的收藏夹空空如也</div>
+            {/if}
+            <div style="text-align:center; padding: 10px 0;">{$list|raw}</div>
+        {/if}
+
+    </div>
+{/if}
+
+<!-- 隐藏的友链申请表单模版 (底层弹出) -->
+<div id="m-friend-form-html" style="display:none;">
+    <div style="padding: 24px 20px;">
+        <div style="font-size:18px; font-weight:bold; text-align:center; margin-bottom:20px;">申请友情链接</div>
+        <form class="layui-form" lay-filter="mFriendForm">
+            <input type="hidden" name="id" value="0">
+            
+            <div style="margin-bottom:15px;">
+                <input type="text" name="name" lay-verify="required" placeholder="网站名称 (必填)" class="layui-input" style="border-radius:10px; height:48px; background:#f5f7fa; border:none; padding-left:15px;">
+            </div>
+            
+            <div style="margin-bottom:15px;">
+                <input type="url" name="url" lay-verify="required|url" placeholder="网站链接 (如 https://www.example.com)" class="layui-input" style="border-radius:10px; height:48px; background:#f5f7fa; border:none; padding-left:15px;">
+            </div>
+            
+            <div style="margin-bottom:15px;">
+                <input type="url" name="logo" placeholder="Logo图片网络链接 (选填)" class="layui-input" style="border-radius:10px; height:48px; background:#f5f7fa; border:none; padding-left:15px;">
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <textarea name="description" placeholder="简单描述一下您的网站 (选填)" class="layui-textarea" style="border-radius:10px; background:#f5f7fa; border:none; padding:15px; height:100px; resize:none;"></textarea>
+            </div>
+            
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-fluid" lay-submit lay-filter="submitFriend" style="border-radius:24px; height:48px; font-size:16px; margin-bottom:15px;">免费提交审核</button>
+            
+            {if isset($config.friend_link_price) && $config.friend_link_price > 0}
+            <div style="position:relative; text-align:center; margin-bottom:15px;">
+                <span style="background:#fff; padding:0 10px; color:#ccc; font-size:12px; position:relative; z-index:2;">或者</span>
+                <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:#eee; z-index:1;"></div>
+            </div>
+            <button type="button" class="layui-btn layui-btn-warm layui-btn-fluid" onclick="submitPaidFriend()" style="background: linear-gradient(135deg, #fbc531, #f39c12); border:none; border-radius:24px; height:48px; font-size:16px; box-shadow:0 4px 10px rgba(243, 156, 18, 0.3); margin-left:0;">
+                <i class="layui-icon layui-icon-speaker"></i> 付费极速直通 (￥{$config.friend_link_price})
+            </button>
+            <div style="text-align:center; margin-top:12px; font-size:12px; color:#e6a23c;">付费直通审核免排队，首页优先展示 1 个月</div>
+            {/if}
+        </form>
+    </div>
+</div>
+
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+
+    // ================= 弹窗：底部弹出分类栏目 =================
+    window.showMobileCategories = function() {
+        var html = '<div style="padding: 20px;">';
+        html += '<div style="font-size:18px; font-weight:bold; text-align:center; margin-bottom:20px; color:#333;">快速直达栏目</div>';
+        var categories = JSON.parse('{:json_encode($categories|default=[])}');
+        if(categories.length > 0) {
+            html += '<div class="layui-row layui-col-space12">';
+            categories.forEach(function(cat){
+                html += '<div class="layui-col-xs4"><a href="/?cat='+cat.id+'.html" style="display:block; text-align:center; padding:15px 5px; background:#f8f9fc; border-radius:12px; color:#333; font-size:14px; font-weight:500; text-decoration:none;"><i class="layui-icon layui-icon-app" style="display:block; font-size:24px; color:#448ef6; margin-bottom:5px;"></i>'+cat.name+'</a></div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<div style="text-align:center; color:#999; padding:40px 0;">暂无栏目</div>';
+        }
+        html += '</div>';
+
+        layer.open({
+            type: 1, title: false, closeBtn: 0,
+            offset: 'b', anim: 'slideUp',
+            area: ['100%', '50%'], shadeClose: true,
+            skin: 'layui-layer-transparent', // 自定义背景
+            content: '<div style="background:#fff; border-radius:24px 24px 0 0; height:100%;">' + html + '</div>'
+        });
+    };
+
+    // ================= 表单提交：修改资料 =================
+    form.on('submit(saveProfile)', function(data){
+        layer.msg('正在保存资料...', {icon: 16, time: 0});
+        $.post("{:url('user/profile')}", data.field, function(res){
+            layer.closeAll();
+            layer.msg(res.msg, {icon: res.code==1?1:2});
+        });
+        return false;
+    });
+
+    form.on('submit(savePwd)', function(data){
+        if(!data.field.password) { layer.msg('请输入新密码', {icon:0}); return false; }
+        layer.msg('正在修改密码...', {icon: 16, time: 0});
+        $.post("{:url('user/profile')}", data.field, function(res){
+            layer.closeAll();
+            if(res.code == 1){
+                layer.msg('密码修改成功，请重新登录', {icon: 1, time:1500}, function(){ location.href = "{:url('user/login')}"; });
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        });
+        return false;
+    });
+
+    // ================= 订单防抖和倒计时逻辑 =================
+    $('.order-countdown-text').each(function(){
+        var el = this;
+        var secs = parseInt($(el).attr('data-seconds'));
+        if(isNaN(secs) || secs <= 0) return;
+        el._secs = secs;
+        var m = Math.floor(el._secs / 60); var s = el._secs % 60;
+        $(el).text((m<10?'0'+m:m) + ':' + (s<10?'0'+s:s));
+        
+        setInterval(function(){
+            if(el._secs <= 0) { $(el).text(''); return; }
+            el._secs--;
+            m = Math.floor(el._secs / 60); s = el._secs % 60;
+            $(el).text((m<10?'0'+m:m) + ':' + (s<10?'0'+s:s));
+            if(el._secs == 0) setTimeout(function(){location.reload();},1000);
+        }, 1000);
+    });
+
+    window.cancelOrder = function(orderNo) {
+        layer.confirm('确定要取消该笔订单吗？取消后无法恢复', {
+            title:'提示', btn:['确定取消','暂不取消'], skin:'layui-layer-molv'
+        }, function(idx){
+            layer.close(idx); 
+            var loadIdx = layer.load(1);
+            $.post("{:url('user/cancelOrder')}", {order_no: orderNo}, function(res){
+                layer.close(loadIdx);
+                if(res.code==1) { layer.msg('订单已取消', {icon:1, time:1000}, function(){location.reload();}); }
+                else { layer.msg(res.msg, {icon:2}); }
+            }, 'json');
+        });
+    };
+
+    // ================= 友链申请逻辑 =================
+    window.showMobileFriendLinkApply = function(id) {
+        id = id || 0;
+        layer.open({
+            type: 1, title: false, closeBtn: 0,
+            offset: 'b', anim: 'slideUp',
+            area: ['100%', 'auto'], shadeClose: true,
+            content: '<div style="background:#fff; border-radius:24px 24px 0 0; padding-bottom:env(safe-area-inset-bottom);">' + $('#m-friend-form-html').html() + '</div>',
+            success: function(layero, index){
+                var jForm = layero.find('form');
+                form.render(null, 'mFriendForm');
+                if(id) {
+                    var loadIdx = layer.load(1);
+                    $.get("{:url('user/getFriendLink')}", {id: id}, function(res){
+                        layer.close(loadIdx);
+                        if(res.code==1) {
+                            jForm.find('[name="id"]').val(res.data.id);
+                            jForm.find('[name="name"]').val(res.data.name);
+                            jForm.find('[name="url"]').val(res.data.url);
+                            jForm.find('[name="logo"]').val(res.data.logo);
+                            jForm.find('[name="description"]').val(res.data.description);
+                        }
+                    }, 'json');
+                }
+                
+                form.on('submit(submitFriend)', function(data){
+                    layer.msg('正在提交审核...', {icon:16, time:0});
+                    $.post("{:url('user/applyFriendLink')}", data.field, function(res){
+                        layer.closeAll();
+                        layer.msg(res.msg, {icon:res.code==1?1:2}, function(){ if(res.code==1) location.reload(); });
+                    }, 'json');
+                    return false;
+                });
+
+                window.submitPaidFriend = function() {
+                    var data = jForm.serializeArray().reduce(function(obj, item) { obj[item.name] = item.value; return obj; }, {});
+                    if(!data.name || !data.url) { layer.msg('请填写必填项(网站名称与链接)', {icon:0}); return; }
+                    data.is_paid = 1;
+                    layer.msg('正在为您跳转收银台...', {icon:16, time:0});
+                    $.post("{:url('user/applyFriendLink')}", data, function(res){
+                        layer.closeAll();
+                        if(res.code==1 && res.url) {
+                            location.href = res.url;
+                        } else {
+                            layer.msg(res.msg, {icon:2});
+                        }
+                    }, 'json');
+                };
+            }
+        });
+    };
+});
+</script>
+</body>
+</html>

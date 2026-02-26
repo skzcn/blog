@@ -1,0 +1,337 @@
+{include file="layout/header" /}
+<!-- Site Activity Bar (Premium Fixed) -->
+<section class="container pt-3 pb-0">
+    <div class="row g-0 justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8" style="background: rgba(108, 117, 125, 0.1); padding: 8px; border-radius: 8px; max-width: 800px; margin: 0 auto;">
+            <div class="p-dynamic-warp d-flex align-items-center">
+                <div class="p-dynamic-label flex-shrink-0" style="margin-right: 12px; display: flex; align-items: center;">
+                    <span class="badge" style="background-color: #444; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: normal; font-size: 12px; height: 24px; display: flex; align-items: center;">
+                        <i class="layui-icon layui-icon-speaker me-1" style="font-size: 13px;"></i>网站动态
+                    </span>
+                </div>
+                <div class="p-dynamic-slider flex-grow-1 overflow-hidden" style="position: relative; height: 32px;">
+                    <ul class="p-dynamic-list" id="p-activity-list" style="margin: 0; padding: 0; list-style: none; display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); height: 100%;">
+                        <!-- Dynamic items -->
+                    </ul>
+                </div>
+                <div class="p-dynamic-nav-box ms-3" style="display: flex; align-items: center; background: rgba(0,0,0,0.03); border-radius: 4px; padding: 4px 8px; gap: 10px; height: 24px; align-self: center;">
+                    <i class="layui-icon layui-icon-left" id="p-activity-prev" style="cursor: pointer; font-size: 11px; color: #aaa; display: flex; align-items: center; justify-content: center;"></i>
+                    <i class="layui-icon layui-icon-right" id="p-activity-next" style="cursor: pointer; font-size: 11px; color: #aaa; display: flex; align-items: center; justify-content: center;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<link rel="stylesheet" href="/static/css/index.css">
+
+<script>
+    window._P_ACTIVITIES_ = {:json_encode($activities)};
+</script>
+<script src="/static/js/index.js"></script>
+<!-- Category Icons (Optional) -->
+<div class="category-icons" style="background-color: #F5F6FA;">
+    <div class="container">
+        <div class="category-scroll-wrapper">
+            <div class="cat-nav-btn cat-prev" id="cat-prev"><i class="layui-icon layui-icon-left"></i></div>
+            <div class="category-scroll-container" id="cat-scroll">
+                {volist name="categories" id="vo"}
+                <a href="/?cat={$vo.id}.html" class="cat-scroll-item">
+                    <i class="{$vo.icon|default='layui-icon layui-icon-app'}"></i>
+                    <span>{$vo.name}</span>
+                </a>
+                {/volist}
+            </div>
+            <div class="cat-nav-btn cat-next" id="cat-next"><i class="layui-icon layui-icon-right"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+
+<div class="container main-content">
+    <!-- Left Content -->
+    <div class="content-left">
+        <div class="section-header">
+            <h2 class="section-title-main">
+                {if isset($currentCategory)}
+                    {$currentCategory.name}
+                {else}
+                    最新推荐
+                {/if}
+            </h2>
+            <p class="section-subtitle">
+                {if isset($currentCategory)}
+                    {$currentCategory.description|default='当前分类下的所有资源'}
+                {else}
+                    当前最新发布更新的热门资源，我们将持续保持更新
+                {/if}
+            </p>
+        </div>
+
+        {if !isset($currentCategory)}
+        <div class="cat-filter-bar">
+            <div class="cat-filter-item active">最新</div>
+        </div>
+        {/if}
+        
+        <div class="resource-grid">
+            {volist name="articles" id="vo"}
+            <div class="resource-card">
+                <div class="card-thumb">
+                    <a href="/article/details.html?id={$vo.id}.html">
+                        {if $vo.thumbnail}
+                        <img src="{$vo.thumbnail}" alt="{$vo.title}">
+                        {else}
+                        <img src="{$config.article_default_image|default='/static/images/default.jpg'}" alt="{$vo.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {/if}
+                    </a>
+                    
+                    <div class="card-badges">
+                        <div class="badge-left">
+                            {if condition="$vo.is_hot == 1"}
+                            <span class="tag-top">置顶</span>
+                            {/if}
+                        </div>
+                        <div class="badge-right">
+                            {if condition="$vo.is_vip_free == 1"}
+                            <span class="tag-vip">VIP</span>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-content">
+                    <div class="card-info-row">
+                        <span class="dot-cat"></span>
+                        <a href="/?cat={$vo.category.id}.html" class="cat-name-link">{$vo.category.name}</a>
+                        <span>·</span>
+                        <span>{$vo.create_time|date='Y-m-d'}</span>
+                    </div>
+                    
+                    <a href="/article/details.html?id={$vo.id}.html" class="res-title">{$vo.title}</a>
+                    
+                    <div class="res-desc">
+                        {$vo.description|default='暂无描述...'}
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="meta-group">
+                            <div class="meta-item"><i class="layui-icon layui-icon-read"></i>{$vo.views}</div>
+                            <div class="meta-item"><i class="layui-icon layui-icon-star"></i>0</div>
+                            <div class="meta-item"><i class="layui-icon layui-icon-dialogue"></i>0</div>
+                        </div>
+                        <div class="meta-item">
+                            {if $vo.price > 0}￥{$vo.price}{else}免费{/if}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/volist}
+        </div>
+        
+        {if condition="count($articles) > 0"}
+        <a href="javascript:;" class="load-more-btn">加载更多</a>
+        {else}
+        <div style="text-align: center; padding: 80px 20px; color: #999;">
+            <i class="layui-icon layui-icon-face-cry" style="font-size: 60px; display: block; margin-bottom: 20px; opacity: 0.3;"></i>
+            <p style="font-size: 16px;">暂无资源</p>
+        </div>
+        {/if}
+
+        <!-- Position 1 Ads -->
+        {volist name="ads_pos1" id="ad"}
+        <div class="ad-container" style="margin: 20px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            {if $ad.type == 1}
+            <a href="{$ad.link_url}" target="_blank">
+                <img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;">
+            </a>
+            {else}
+            {$ad.js_code|raw}
+            {/if}
+        </div>
+        {/volist}
+
+        <!-- Category Sections (Ripro Style) -->
+        {if empty($catId)}
+        <div class="category-sections" style="margin-top: 50px;">
+            {volist name="categories" id="cat"}
+            <div class="cat-section" style="margin-bottom: 40px;">
+                <div class="cat-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">
+                    <h3 style="font-size: 20px; font-weight: 700; color: #333; position: relative; padding-left: 15px;">
+                        <span style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 4px; height: 18px; background: #ff9800; border-radius: 2px;"></span>
+                        {$cat.name}
+                    </h3>
+                    <a href="/?cat={$cat.id}.html" class="section-load-more-btn">加载更多</a>
+                </div>
+                <div class="resource-grid">
+                    {volist name="cat.latest_articles" id="vo"}
+                    <div class="resource-card">
+                        <div class="card-thumb">
+                            <a href="/article/details.html?id={$vo.id}.html">
+                                {if $vo.thumbnail}
+                                <img src="{$vo.thumbnail}" alt="{$vo.title}">
+                                {else}
+                                <img src="{$config.article_default_image|default='/static/images/default.jpg'}" alt="{$vo.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {/if}
+                            </a>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-info-row">
+                                <span class="dot-cat"></span>
+                                <span class="cat-name-link">{$cat.name}</span>
+                                <span>·</span>
+                                <span>{$vo.create_time|date='Y-m-d'}</span>
+                            </div>
+                            <a href="/article/details.html?id={$vo.id}.html" class="res-title">{$vo.title}</a>
+                            <div class="card-footer">
+                                <div class="meta-group">
+                                    <div class="meta-item"><i class="layui-icon layui-icon-read"></i>{$vo.views}</div>
+                                </div>
+                                <div class="meta-item">
+                                    {if $vo.price > 0}￥{$vo.price}{else}免费{/if}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/volist}
+                </div>
+            </div>
+            {/volist}
+        </div>
+        {/if}
+    </div>
+    
+    <!-- Right Sidebar -->
+    <aside class="content-right">
+        <!-- User Widget -->
+        <div class="widget login-widget-premium">
+            {if $user}
+            <div class="user-info logged-in">
+                <div class="user-avatar-premium">
+                    <i class="layui-icon layui-icon-username"></i>
+                </div>
+                <div class="user-name-premium">{$user.nickname|default=$user.username}</div>
+                <div class="user-role-badge">
+                    {if isset($user.vip_level) && $user.vip_level > 0}
+                    <span class="badge-vip"><i class="layui-icon layui-icon-diamond"></i> VIP会员</span>
+                    {else}
+                    <span class="badge-normal">普通用户</span>
+                    {/if}
+                </div>
+                <div class="user-stats-premium">
+                    <div class="stat-box">
+                        <div class="stat-val">{$user.money|default=0|number_format=2}</div>
+                        <div class="stat-label">金币余额</div>
+                    </div>
+                    <a href="/user/index.html?tab=contributions.html" class="stat-box" style="text-decoration: none; display: block; color: inherit; transition: opacity 0.3s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                        <div class="stat-val"><?php echo \think\facade\Db::name('blog_article')->where('author_id', $user['id'])->count(); ?></div>
+                        <div class="stat-label">我的文章</div>
+                    </a>
+                </div>
+                <a href="/user/index.html" class="premium-action-btn">进入中心</a>
+            </div>
+            {else}
+            <div class="user-info guest-mode">
+                <div class="user-avatar-premium">
+                    <i class="layui-icon layui-icon-username"></i>
+                </div>
+                <div class="welcome-text-premium">
+                    <h3>欢迎来到 {$config.site_name}</h3>
+                    <p>登录后享受更多权益</p>
+                </div>
+                <a href="javascript:;" onclick="showLogin()" class="premium-login-btn">立即登录</a>
+                <div class="guest-footer">
+                    还没有账号？<a href="javascript:;" onclick="showRegister()">立即注册</a>
+                </div>
+            </div>
+            {/if}
+        </div>
+        
+        <!-- Hot List Widget -->
+        <div class="widget login-widget-premium">
+            <div class="premium-widget-title"><i class="layui-icon layui-icon-fire"></i> 热门排行</div>
+            <ul class="hot-list-premium">
+                {volist name="hot_articles" id="vo" key="k"}
+                <li class="hot-item-premium">
+                    <div class="rank-badge rank-{$k}">{$k}</div>
+                    <div class="hot-content-premium">
+                        <a href="/article/details.html?id={$vo.id}.html" class="hot-title-premium">{$vo.title}</a>
+                        <div class="hot-meta-premium"><i class="layui-icon layui-icon-read"></i> {$vo.views} 浏览</div>
+                    </div>
+                </li>
+                {/volist}
+            </ul>
+        </div>
+        <!-- Home Sidebar Ads -->
+        {if condition="(!isset($config.ad_global_status) || $config.ad_global_status == 1) && (!isset($config.ad_pos_1_status) || $config.ad_pos_1_status == 1) && (!isset($config.ad_vip_exempt) || $config.ad_vip_exempt == 0 || !isset($user.vip_level) || $user.vip_level == 0)"}
+        {volist name="ads_pos1" id="ad"}
+        <div class="ad-container" style="margin-bottom: 25px; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+            {if $ad.type == 1}
+            <a href="{$ad.link_url}" target="_blank">
+                <img src="{$ad.image_url}" alt="{$ad.title}" style="width: 100%; display: block;">
+            </a>
+            {else}
+            {$ad.js_code|raw}
+            {/if}
+        </div>
+        {/volist}
+        {/if}
+        
+        <!-- VIP Promo -->
+        <div class="vip-promo-premium">
+            <div class="vip-glow-effect"></div>
+            <div class="vip-card-content">
+                <div class="vip-icon-box">
+                    <i class="layui-icon layui-icon-diamond"></i>
+                </div>
+                <h3>VIP 尊享特权</h3>
+                <p>解锁全站 10000+ 极品资源</p>
+                {if $user}
+                <a href="{:url('vip/index')}" class="vip-action-btn">立即获取特权</a>
+                {else}
+                <a href="javascript:;" onclick="showLogin()" class="vip-action-btn">登录后开通</a>
+                {/if}
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Friend Links Section -->
+{if isset($friendLinks) && !$friendLinks->isEmpty()}
+<div class="container" style="margin-top: 50px; margin-bottom: 20px;">
+    <div class="friend-links-container" style="background: #fff; border-radius: 12px; padding: 25px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.03);">
+        <div class="friend-links-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f5f5f5; padding-bottom: 15px;">
+            <h3 style="font-size: 18px; font-weight: 700; color: #333; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="layui-icon layui-icon-link" style="color: #2196f3; font-size: 20px;"></i> 友情链接
+            </h3>
+            <a href="javascript:;" onclick="showApplyFriend()" style="font-size: 13px; color: #999; text-decoration: none; transition: color 0.2s;">申请友链 <i class="layui-icon layui-icon-right" style="font-size: 12px;"></i></a>
+        </div>
+        <div class="friend-links-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
+            {volist name="friendLinks" id="vo"}
+            <a href="{$vo.url}" target="_blank" class="friend-link-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #f8fafc; text-decoration: none; transition: all 0.3s; border: 1px solid transparent;">
+                {if $vo.logo}
+                <img src="{$vo.logo}" alt="{$vo.name}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #fff;">
+                {else}
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; color: #718096; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0;">
+                    {:mb_substr($vo.name, 0, 1)}
+                </div>
+                {/if}
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 14px; font-weight: 500; color: #4a5568; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{$vo.name}</div>
+                    {if $vo.description}
+                    <div style="font-size: 11px; color: #a0aec0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">{$vo.description}</div>
+                    {/if}
+                </div>
+            </a>
+            {/volist}
+        </div>
+    </div>
+</div>
+
+{/if}
+
+{include file="layout/footer" /}
+
+
+

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>兑换设置</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-form-label { width: 120px; }
+        .layui-input-block { margin-left: 150px; }
+    </style>
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <div class="layui-card">
+        <div class="layui-card-header">金币兑换设置</div>
+        <div class="layui-card-body">
+            <blockquote class="layui-elem-quote">在此设置人民币与金币的兑换比例。例如设置100，则1元人民币 = 100金币。</blockquote>
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">兑换比例</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="exchange_rate" value="{$config.exchange_rate|default='100'}" lay-verify="required|number" placeholder="默认100" class="layui-input">
+                        <div class="layui-form-mid layui-word-aux">1元人民币 = 多少金币</div>
+                    </div>
+                </div>
+                
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="save">保存设置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            form.on('submit(save)', function(data){
+                var loading = layer.load(2);
+                $.post("{:url('settings/exchange')}", data.field, function(res){
+                    layer.close(loading);
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

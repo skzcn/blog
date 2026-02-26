@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>敏感词管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        body { padding: 20px; background-color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="layui-fluid" style="padding: 0;">
+        <div class="layui-card">
+            <div class="layui-card-header">敏感词管理</div>
+            <div class="layui-card-body">
+                <div style="padding-bottom: 10px;">
+                    <div class="layui-inline">
+                        <input class="layui-input" name="word" id="wordInput" placeholder="输入敏感词" autocomplete="off">
+                    </div>
+                    <button class="layui-btn" id="addBtn">添加</button>
+                    <a href="{:url('index')}" class="layui-btn layui-btn-primary">返回列表</a>
+                </div>
+                
+                <table id="tableList" lay-filter="tableList"></table>
+                
+                <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['table', 'jquery', 'layer', 'util'], function(){
+            var table = layui.table;
+            var $ = layui.jquery;
+            var layer = layui.layer;
+            var util = layui.util;
+            
+            var tableIns = table.render({
+                elem: '#tableList',
+                url: "{:url('words')}",
+                page: true,
+                cols: [[
+                    {field: 'id', title: 'ID', width: 80, sort: true},
+                    {field: 'word', title: '敏感词'},
+                    {field: 'create_time', title: '添加时间', templet: function(d){
+                         return util.toDateString(d.create_time*1000, 'yyyy-MM-dd HH:mm:ss');
+                    }},
+                    {fixed: 'right', title:'操作', toolbar: '#barDemo', width:100}
+                ]]
+            });
+            
+            $('#addBtn').click(function(){
+                var word = $('#wordInput').val();
+                if(!word) return layer.msg('请输入内容');
+                $.post("{:url('addWord')}", {word: word}, function(res){
+                    if(res.code == 1){
+                         layer.msg('添加成功');
+                         $('#wordInput').val('');
+                         tableIns.reload();
+                    }else{
+                        layer.msg(res.msg);
+                    }
+                });
+            });
+            
+            table.on('tool(tableList)', function(obj){
+                if(obj.event === 'del'){
+                    layer.confirm('确认删除?', function(index){
+                        $.post("{:url('deleteWord')}", {id: obj.data.id}, function(res){
+                            if(res.code == 1){
+                                obj.del();
+                                layer.close(index);
+                            }else{
+                                layer.msg(res.msg);
+                            }
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

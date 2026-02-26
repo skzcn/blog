@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑评论</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        body { padding: 20px; background-color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="layui-fluid" style="padding: 0;">
+        <div class="layui-card">
+            <div class="layui-card-body" style="padding: 15px;">
+                <form class="layui-form" action="" lay-filter="component-form-group">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">评论内容</label>
+                        <div class="layui-input-block">
+                            <textarea name="content" class="layui-textarea">{$info.content}</textarea>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" lay-submit="" lay-filter="component-form-demo1">立即提交</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'jquery'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.jquery;
+            
+            form.on('submit(component-form-demo1)', function(data){
+                $.post("{:url('edit')}?id={$info.id}", data.field, function(res){
+                    if(res.code == 1){
+                        layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                            // If opened in iframe/layer
+                            var index = parent.layer.getFrameIndex(window.name); 
+                            if(index){
+                                parent.layer.close(index);
+                                parent.layui.table.reload('tableList');
+                            } else {
+                                location.reload();
+                            }
+                        });
+                    }else{
+                        layer.msg(res.msg);
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

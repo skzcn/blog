@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>广告管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .container { padding: 20px; background-color: #fff; }
+        .layui-table-cell { height: auto; line-height: 28px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="layui-breadcrumb" style="margin-bottom: 20px;">
+            <a href="">系统管理</a>
+            <a><cite>广告管理</cite></a>
+        </div>
+
+        <div class="layui-btn-group" style="margin-bottom: 20px;">
+            <a href="{:url('ad/add')}" class="layui-btn"><i class="layui-icon layui-icon-add-1"></i> 添加广告</a>
+        </div>
+
+        <table class="layui-table">
+            <thead>
+                <tr>
+                    <th width="50">ID</th>
+                    <th>广告标题</th>
+                    <th width="150">显示位置</th>
+                    <th width="100">类型</th>
+                    <th width="80">状态</th>
+                    <th width="80">排序</th>
+                    <th width="120">创建时间</th>
+                    <th width="150">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="list" id="vo"}
+                <tr>
+                    <td>{$vo.id}</td>
+                    <td>{$vo.title}</td>
+                    <td>
+                        {if $vo.position == 1}首页侧边栏{/if}
+                        {if $vo.position == 2}文章上方广告位{/if}
+                        {if $vo.position == 3}文章侧边栏广告位{/if}
+                        {if $vo.position == 4}文章中(锁前)广告位{/if}
+                    </td>
+                    <td>
+                        {if $vo.type == 1}<span class="layui-badge layui-bg-blue">图片链接</span>{else}<span class="layui-badge layui-bg-orange">JS代码</span>{/if}
+                    </td>
+                    <td>
+                        <input type="checkbox" name="status" lay-skin="switch" lay-text="上架|下架" {if $vo.status == 1}checked{/if} lay-filter="status" data-id="{$vo.id}">
+                    </td>
+                    <td>{$vo.sort}</td>
+                    <td>{$vo.create_time|date='Y-m-d'}</td>
+                    <td>
+                        <a href="{:url('ad/edit', ['id' => $vo.id])}" class="layui-btn layui-btn-xs">编辑</a>
+                        <button class="layui-btn layui-btn-danger layui-btn-xs del-btn" data-id="{$vo.id}">删除</button>
+                    </td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+        {$list|raw}
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            // 监听状态切换
+            form.on('switch(status)', function(data){
+                var id = $(data.elem).data('id');
+                var status = data.elem.checked ? 1 : 0;
+                $.post("{:url('ad/status')}", {id: id, status: status}, function(res){
+                    if(res.code !== 1){
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+
+            // 监听删除
+            $('.del-btn').click(function(){
+                var id = $(this).data('id');
+                layer.confirm('确定要删除吗？', function(){
+                    $.post("{:url('ad/delete')}", {id: id}, function(res){
+                      if(res.code === 1){
+                          layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                              location.reload();
+                          });
+                      }else{
+                          layer.msg(res.msg, {icon: 2});
+                      }
+                    }, 'json');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

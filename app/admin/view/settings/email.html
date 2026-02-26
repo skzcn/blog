@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>邮件设置</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-form-label { width: 140px; }
+        .layui-input-block { margin-left: 170px; }
+    </style>
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <div class="layui-card">
+        <div class="layui-card-header">SMTP 邮件发送设置</div>
+        <div class="layui-card-body">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">SMTP服务器</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email_smtp_host" value="{$config.email_smtp_host}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">端口</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email_smtp_port" value="{$config.email_smtp_port}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">账号 (Email)</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email_smtp_user" value="{$config.email_smtp_user}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">授权码/密码</label>
+                    <div class="layui-input-block">
+                        <input type="password" name="email_smtp_pass" value="{$config.email_smtp_pass}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">发件人昵称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email_from_name" value="{$config.email_from_name}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">发件人地址</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email_from_addr" value="{$config.email_from_addr}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="save">保存邮件设置</button>
+                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="test">发送测试邮件</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            form.on('submit(save)', function(data){
+                $.post("{:url('settings/email')}", data.field, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+
+            form.on('submit(test)', function(data){
+                layer.prompt({title: '请输入接收测试的邮箱地址', formType: 0}, function(email, index){
+                    layer.close(index);
+                    var loadIndex = layer.load(2);
+                    var postData = data.field;
+                    postData.test_email = email;
+                    $.post("{:url('settings/testEmail')}", postData, function(res){
+                        layer.close(loadIndex);
+                        if(res.code === 1){
+                            layer.msg(res.msg, {icon: 1, time: 3000});
+                        }else{
+                            layer.alert(res.msg, {icon: 2}, function(idx){
+                                layer.close(idx);
+                            });
+                        }
+                    }, 'json');
+                });
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

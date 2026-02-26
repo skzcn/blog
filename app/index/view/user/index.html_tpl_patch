@@ -1,0 +1,41 @@
+<div id="friendLinkTpl" style="display: none;">
+    <div style="padding: 25px;">
+        <form class="layui-form" lay-filter="friendLinkForm">
+            <input type="hidden" name="id" value="0">
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站名称</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="text" name="name" required lay-verify="required" placeholder="请输入您的网站名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站链接</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="url" name="url" required lay-verify="required|url" placeholder="如：https://www.example.com" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站Logo</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="url" name="logo" placeholder="Logo图片链接 (选填)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label" style="width: 70px;">网站简述</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <textarea name="description" placeholder="简单描述一下您的网站 (选填)" class="layui-textarea" style="height: 80px;"></textarea>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 35px; border-top: 1px solid #f0f0f0; padding-top: 20px;">
+                <button class="layui-btn layui-btn-normal" style="padding: 0 30px; border-radius: 20px;" lay-submit lay-filter="saveFriendLink">提交免费审核</button>
+                {if $config.friend_link_price > 0}
+                <button type="button" class="layui-btn layui-btn-warm" style="padding: 0 30px; border-radius: 20px;" onclick="buyFriendLinkFn()">付费免审上架 (￥{$config.friend_link_price})</button>
+                {/if}
+            </div>
+        </form>
+    </div>
+</div>

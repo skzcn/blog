@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>评论管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        body { padding: 20px; background-color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="layui-fluid" style="padding: 0;">
+        <div class="layui-card">
+            <div class="layui-card-header">评论管理</div>
+            <div class="layui-card-body">
+                <div style="padding-bottom: 10px;">
+                    <a href="{:url('words')}" class="layui-btn layui-btn-normal">敏感词管理</a>
+                </div>
+                
+                <table id="tableList" lay-filter="tableList"></table>
+                
+                <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['table', 'jquery', 'layer'], function(){
+            var table = layui.table;
+            var $ = layui.jquery;
+            var layer = layui.layer;
+            
+            table.render({
+                elem: '#tableList',
+                url: "{:url('index')}",
+                page: true,
+                cols: [[
+                    {checkbox: true, fixed: 'left'},
+                    {field: 'id', title: 'ID', width: 80, sort: true},
+                    {field: 'content', title: '内容'},
+                    {field: 'user_id', title: '用户', templet: function(d){
+                        return d.user ? d.user.username : 'Unknown';
+                    }},
+                    {field: 'article_id', title: '文章', templet: function(d){
+                        return d.article ? d.article.title : 'Deleted';
+                    }},
+                    {field: 'create_time', title: '时间', sort: true},
+                    {fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+                ]]
+            });
+            
+            // Listen to tool events
+            table.on('tool(tableList)', function(obj){
+                if(obj.event === 'del'){
+                    layer.confirm('真的删除行么', function(index){
+                        $.post("{:url('delete')}", {id: obj.data.id}, function(res){
+                            if(res.code == 1){
+                                obj.del();
+                                layer.close(index);
+                            }else{
+                                layer.msg(res.msg);
+                            }
+                        });
+                    });
+                } else if(obj.event === 'edit'){
+                    layer.open({
+                        type: 2,
+                        title: '编辑评论',
+                        content: "{:url('edit')}?id=" + obj.data.id,
+                        area: ['500px', '400px']
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+                <div class="layui-form-item">
+                    <label class="layui-form-label">友情链接申请价格</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="friend_link_price" value="{$config.friend_link_price|default='0'}" placeholder="例如：10.00，设为0则代表免费（需人工审核）。付费则自动展示" lay-verify="required" class="layui-input" step="0.01">
+                        <div class="layui-form-mid layui-word-aux">申请一条友情链接所需支付的金额 (元)。设置为 0 表示采用免费申请模式，需在后台手动审核通过；如果大于 0，则用户支付后直接自动上线展示。</div>
+                    </div>
+                </div>

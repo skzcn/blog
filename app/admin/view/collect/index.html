@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>采集节点管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .container { padding: 20px; }
+        .layui-card-header { font-weight: bold; }
+        td .layui-btn { margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+    <div class="container layui-form">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                采集节点管理
+                <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right;margin-top:5px;" id="addNode">添加节点</button>
+                <button class="layui-btn layui-btn-sm layui-btn-warm" style="float:right;margin-top:5px;margin-right:10px;" onclick="location.href='{:url(\"collect/draft\")}'"><i class="layui-icon layui-icon-file-b"></i> 草稿管理</button>
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="nodeTable" lay-filter="nodeTable"></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 表格操作列 -->
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="test">测试采集</a>
+        <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="execute">执行采集</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['table', 'jquery', 'layer'], function(){
+            var table = layui.table;
+            var $ = layui.jquery;
+            var layer = layui.layer;
+
+            // ===== 采集进度全局状态 =====
+            window._collectSSE = null;       // EventSource 实例
+            window._collectLogs = [];        // 日志缓存
+            window._collectStats = {success:0, fail:0, skip:0}; // 统计
+            window._collectTitle = '';       // 采集标题
+            window._collectDone = false;     // 是否完成
+            window._collectPanelIndex = null; // 弹窗layer索引
+
+            // 创建/显示浮动恢复按钮
+            function showRestoreBtn(){
+                if($('#collectRestoreBtn').length) {
+                    $('#collectRestoreBtn').fadeIn(300);
+                    return;
+                }
+                var btn = $('<div id="collectRestoreBtn" style="' +
+                    'position:fixed;right:20px;bottom:30px;z-index:19999;' +
+                    'background:linear-gradient(135deg,#1890ff,#36cfc9);color:#fff;' +
+                    'padding:12px 20px;border-radius:30px;cursor:pointer;' +
+                    'box-shadow:0 4px 15px rgba(24,144,255,0.4);font-size:14px;' +
+                    'display:flex;align-items:center;gap:8px;' +
+                    'animation:collectPulse 2s infinite;' +
+                    'transition:transform 0.2s,box-shadow 0.2s;' +
+                    '">' +
+                    '<i class="layui-icon layui-icon-loading-1 layui-anim layui-anim-rotate layui-anim-loop" style="font-size:18px;"></i>' +
+                    '<span>采集进行中 - 点击查看</span>' +
+                    '</div>');
+                btn.hover(
+                    function(){ $(this).css({transform:'scale(1.05)', boxShadow:'0 6px 20px rgba(24,144,255,0.5)'}); },
+                    function(){ $(this).css({transform:'scale(1)', boxShadow:'0 4px 15px rgba(24,144,255,0.4)'}); }
+                );
+                btn.click(function(){ reopenProgressPanel(); });
+                $('body').append(btn);
+                // 添加脉冲动画样式
+                if(!$('#collectPulseStyle').length){
+                    $('head').append('<style id="collectPulseStyle">@keyframes collectPulse{0%,100%{box-shadow:0 4px 15px rgba(24,144,255,0.4)}50%{box-shadow:0 4px 25px rgba(24,144,255,0.7)}}</style>');
+                }
+            }
+
+            function hideRestoreBtn(){
+                $('#collectRestoreBtn').fadeOut(300, function(){ $(this).remove(); });
+            }
+
+            // 更新浮动按钮文字（完成后）
+            function updateRestoreBtnDone(){
+                var btn = $('#collectRestoreBtn');
+                if(btn.length){
+                    btn.find('i').removeClass('layui-anim-rotate layui-anim-loop').css('animation','none');
+                    btn.find('span').text('采集已完成 - 点击查看结果');
+                    btn.css({background:'linear-gradient(135deg,#52c41a,#73d13d)', animation:'none'});
+                }
+            }
+
+            // 构建进度面板HTML
+            function buildProgressHTML(){
+                var html = '<div id="collectProgress" style="padding:15px;height:100%;display:flex;flex-direction:column;">';
+                html += '<div style="display:flex;gap:15px;margin-bottom:10px;font-size:14px;">';
+                html += '<span>✅ 成功: <b id="sseSuccess">' + window._collectStats.success + '</b></span>';
+                html += '<span>❌ 失败: <b id="sseFail">' + window._collectStats.fail + '</b></span>';
+                html += '<span>⏭️ 跳过: <b id="sseSkip">' + window._collectStats.skip + '</b></span>';
+                var statusText = window._collectDone ? '已完成' : (window._collectSSE ? '采集中...' : '连接断开');
+                var statusColor = window._collectDone ? '#4CAF50' : (window._collectSSE ? '#4CAF50' : '#E57373');
+                html += '<span id="sseStatus" style="color:' + statusColor + ';margin-left:auto;">' + statusText + '</span>';
+                html += '</div>';
+                html += '<div id="sseLog" style="flex:1;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:6px;font-family:Consolas,monospace;font-size:13px;line-height:1.8;"></div>';
+                html += '</div>';
+                return html;
+            }
+
+            // 向日志区域追加一行
+            function appendLogToEl(logEl, msg, color){
+                var line = document.createElement('div');
+                line.style.color = color || '#d4d4d4';
+                line.textContent = msg;
+                logEl.appendChild(line);
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            // 追加日志（保存 + 写入DOM）
+            function appendLog(msg, color){
+                window._collectLogs.push({msg: msg, color: color});
+                var logEl = document.getElementById('sseLog');
+                if(logEl){
+                    appendLogToEl(logEl, msg, color);
+                }
+            }
+
+            // 更新统计
+            function updateStats(d){
+                if(d.success !== undefined) window._collectStats.success = d.success;
+                if(d.fail !== undefined) window._collectStats.fail = d.fail;
+                if(d.skip !== undefined) window._collectStats.skip = d.skip;
+                // 更新DOM
+                var el;
+                el = document.getElementById('sseSuccess');
+                if(el) el.textContent = window._collectStats.success;
+                el = document.getElementById('sseFail');
+                if(el) el.textContent = window._collectStats.fail;
+                el = document.getElementById('sseSkip');
+                if(el) el.textContent = window._collectStats.skip;
+            }
+
+            // 重新打开进度面板
+            function reopenProgressPanel(){
+                hideRestoreBtn();
+                window._collectPanelIndex = layer.open({
+                    type: 1,
+                    title: '采集进度 - ' + window._collectTitle,
+                    area: ['700px', '500px'],
+                    content: buildProgressHTML(),
+                    shade: 0.3,
+                    closeBtn: 1,
+                    cancel: function(){
+                        window._collectPanelIndex = null;
+                        if(window._collectSSE && !window._collectDone){
+                            showRestoreBtn();
+                        }
+                    }
+                });
+                // 重放所有日志
+                var logEl = document.getElementById('sseLog');
+                if(logEl){
+                    window._collectLogs.forEach(function(log){
+                        appendLogToEl(logEl, log.msg, log.color);
+                    });
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+            }
+
+            // 开始SSE采集
+            function startCollect(nodeData, pages){
+                // 重置状态
+                window._collectLogs = [];
+                window._collectStats = {success:0, fail:0, skip:0};
+                window._collectTitle = nodeData.name;
+                window._collectDone = false;
+                hideRestoreBtn();
+
+                var sseUrl = '{:url("collect/executeStream")}' + '?id=' + nodeData.id + '&pages=' + pages;
+
+                // 打开进度面板
+                window._collectPanelIndex = layer.open({
+                    type: 1,
+                    title: '采集进度 - ' + nodeData.name,
+                    area: ['700px', '500px'],
+                    content: buildProgressHTML(),
+                    shade: 0.3,
+                    closeBtn: 1,
+                    cancel: function(){
+                        window._collectPanelIndex = null;
+                        if(window._collectSSE && !window._collectDone){
+                            // 不关闭SSE，显示浮动按钮
+                            showRestoreBtn();
+                        }
+                    }
+                });
+
+                // 启动 SSE
+                var es = new EventSource(sseUrl);
+                window._collectSSE = es;
+
+                es.addEventListener('start', function(e){
+                    var d = JSON.parse(e.data);
+                    var statusEl = document.getElementById('sseStatus');
+                    if(statusEl){ statusEl.textContent = '采集中...'; statusEl.style.color = '#4CAF50'; }
+                    appendLog('▶ ' + d.msg, '#4CAF50');
+                });
+                es.addEventListener('page', function(e){
+                    var d = JSON.parse(e.data);
+                    appendLog('📄 ' + d.msg, '#64B5F6');
+                });
+                es.addEventListener('page_links', function(e){
+                    var d = JSON.parse(e.data);
+                    appendLog('🔗 ' + d.msg, '#90CAF9');
+                });
+                es.addEventListener('fetching', function(e){
+                    var d = JSON.parse(e.data);
+                    var statusEl = document.getElementById('sseStatus');
+                    if(statusEl) statusEl.textContent = d.msg;
+                    appendLog('  ⏳ ' + d.msg, '#B0BEC5');
+                });
+                es.addEventListener('success', function(e){
+                    var d = JSON.parse(e.data);
+                    updateStats(d);
+                    appendLog('  ✅ ' + d.msg, '#81C784');
+                });
+                es.addEventListener('fail', function(e){
+                    var d = JSON.parse(e.data);
+                    updateStats(d);
+                    appendLog('  ❌ ' + d.msg, '#E57373');
+                });
+                es.addEventListener('skip', function(e){
+                    var d = JSON.parse(e.data);
+                    updateStats(d);
+                    appendLog('  ⏭️ ' + d.msg, '#FFB74D');
+                });
+                es.addEventListener('warning', function(e){
+                    var d = JSON.parse(e.data);
+                    appendLog('  ⚠️ ' + d.msg, '#FF7043');
+                });
+                es.addEventListener('info', function(e){
+                    var d = JSON.parse(e.data);
+                    appendLog('  📥 ' + d.msg, '#26C6DA');
+                });
+                es.addEventListener('error', function(e){
+                    if(e.data){
+                        var d = JSON.parse(e.data);
+                        appendLog('⚠️ ' + d.msg, '#FF8A65');
+                    }
+                });
+                es.addEventListener('done', function(e){
+                    var d = JSON.parse(e.data);
+                    updateStats(d);
+                    window._collectDone = true;
+                    var statusEl = document.getElementById('sseStatus');
+                    if(statusEl){ statusEl.textContent = '已完成'; statusEl.style.color = '#4CAF50'; }
+                    appendLog('', '#fff');
+                    appendLog('🎉 ' + d.msg, '#FFD54F');
+                    es.close();
+                    window._collectSSE = null;
+                    // 如果面板已关闭，更新浮动按钮
+                    if(!window._collectPanelIndex){
+                        updateRestoreBtnDone();
+                    }
+                });
+                es.onerror = function(){
+                    window._collectDone = true;
+                    var statusEl = document.getElementById('sseStatus');
+                    if(statusEl){ statusEl.textContent = '连接断开'; statusEl.style.color = '#E57373'; }
+                    appendLog('⚠️ 连接已断开（服务端仍在后台采集，数据会写入草稿箱）', '#E57373');
+                    es.close();
+                    window._collectSSE = null;
+                    if(!window._collectPanelIndex){
+                        updateRestoreBtnDone();
+                    }
+                };
+            }
+
+            // 渲染表格
+            table.render({
+                elem: '#nodeTable',
+                url: '{:url("collect/index")}',
+                page: true,
+                cols: [[
+                    {field: 'id', title: 'ID', width: 60, align: 'center'},
+                    {field: 'name', title: '节点名称'},
+                    {field: 'url', title: '采集地址(含分页)'},
+                    {field: 'category_id', title: '入库分类', templet: function(d){
+                        return d.category ? d.category.name : '未知分类';
+                    }},
+                    {field: 'charset', title: '编码', width: 80, align: 'center'},
+                    {title: '操作', width: 280, toolbar: '#barDemo', align: 'center'}
+                ]]
+            });
+
+            // 添加节点
+            $('#addNode').click(function(){
+                layer.open({
+                    type: 2,
+                    title: '添加节点',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['800px', '90%'],
+                    content: '{:url("collect/form")}',
+                    end: function(){
+                        table.reload('nodeTable');
+                    }
+                });
+            });
+
+            // 工具条事件
+            table.on('tool(nodeTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'del'){
+                    layer.confirm('确认删除该节点吗？', function(index){
+                        $.post('{:url("collect/delete")}', {id: data.id}, function(res){
+                            if(res.code == 1){
+                                layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                                    obj.del();
+                                });
+                            }else{
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        });
+                        layer.close(index);
+                    });
+                } else if(obj.event === 'edit'){
+                    layer.open({
+                        type: 2,
+                        title: '编辑节点',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['800px', '90%'],
+                        content: '{:url("collect/form")}?id=' + data.id,
+                        end: function(){
+                            table.reload('nodeTable');
+                        }
+                    });
+                } else if(obj.event === 'test'){
+                    layer.prompt({
+                        title: '输入测试列表地址(测试第一个页面的列表抓取)',
+                        value: data.url.replace('[page]', '1')
+                    }, function(value, index, elem){
+                        layer.close(index);
+                        var loadIndex = layer.msg('正在抓取远程页面，请耐心等待...', {icon: 16, shade: 0.3, time: 0});
+                        $.ajax({
+                            url: '{:url("collect/testList")}',
+                            type: 'POST',
+                            data: {id: data.id, url: value},
+                            dataType: 'json',
+                            timeout: 30000,
+                            success: function(res){
+                                layer.close(loadIndex);
+                                if(res.code == 1){
+                                    let links = res.data.map(item => item.link).join('<br>');
+                                    layer.open({
+                                      type: 1,
+                                      title: '测试列表抓取成功 (共' + res.data.length + '条链接)',
+                                      area: ['600px', '400px'],
+                                      content: '<div style="padding: 20px;">' + links + '</div>'
+                                    });
+                                }else{
+                                    layer.alert(res.msg, {title: '失败', icon: 2});
+                                }
+                            },
+                            error: function(xhr, status, error){
+                                layer.close(loadIndex);
+                                if(status === 'timeout'){
+                                    layer.alert('请求超时（30秒），目标网站响应太慢', {title: '超时', icon: 2});
+                                }else{
+                                    layer.alert('请求失败：' + (error || '网络错误'), {title: '错误', icon: 2});
+                                }
+                            }
+                        });
+                    });
+                } else if(obj.event === 'execute'){
+                    // 检查是否有正在进行的采集
+                    if(window._collectSSE){
+                        layer.confirm('当前有采集任务正在进行，是否查看进度？', {
+                            btn: ['查看进度', '取消']
+                        }, function(index){
+                            layer.close(index);
+                            reopenProgressPanel();
+                        });
+                        return;
+                    }
+                    layer.prompt({
+                        title: '要采集多少页数据？',
+                        formType: 0,
+                        value: '1'
+                    }, function(value, index){
+                        layer.close(index);
+                        startCollect(data, value);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

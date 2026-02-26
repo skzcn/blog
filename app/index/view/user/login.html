@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户登录 - {$config.site_name}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/mobile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Inter', "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #333;
+        }
+        
+        .login-wrapper {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 60px 50px;
+            border-radius: 20px;
+            /* Enhanced 3D Depth */
+            box-shadow: 0 30px 60px -12px rgba(50, 50, 93, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* Close button aesthetic */
+        .close-btn {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: rotate(90deg);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 45px;
+        }
+        
+        .login-header h2 {
+            font-size: 32px;
+            font-weight: 500;
+            color: #444;
+            letter-spacing: 2px;
+        }
+
+        .layui-form-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 20px;
+            z-index: 10;
+        }
+
+        .layui-input {
+            height: 56px !important;
+            background-color: #fff !important;
+            border: 1px solid #eee !important;
+            border-radius: 4px !important;
+            padding: 0 15px 0 45px !important;
+            font-size: 16px !important;
+            transition: all 0.3s;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+        
+        .layui-input:focus {
+            border-color: #1e9fff !important;
+            box-shadow: 0 0 8px rgba(30, 159, 255, 0.1) !important;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 56px;
+            line-height: 56px;
+            background: #2196f3 !important; /* Specific blue from screenshot */
+            color: #fff !important;
+            border-radius: 4px !important;
+            border: none !important;
+            font-size: 18px !important;
+            font-weight: 400 !important;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 14px 0 rgba(33, 150, 243, 0.39);
+        }
+        
+        .login-btn:hover {
+            background: #1976d2 !important;
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.23);
+        }
+
+        .login-links {
+            text-align: center;
+            margin-top: 35px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .login-links a {
+            color: #009688; /* Teal color from screenshot */
+            text-decoration: none;
+            margin-left: 5px;
+        }
+        
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 14px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-box">
+            <div class="close-btn" onclick="javascript:history.back();">
+                <i class="layui-icon layui-icon-close"></i>
+            </div>
+            
+            <div class="login-header">
+                <h2>用户登录</h2>
+            </div>
+            
+            <form class="layui-form">
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-username input-icon"></i>
+                    <input type="text" name="username" lay-verify="required" placeholder="请输入账号" class="layui-input" autocomplete="username">
+                </div>
+                <div class="layui-form-item">
+                    <i class="layui-icon layui-icon-password input-icon"></i>
+                    <input type="password" name="password" lay-verify="required" placeholder="请输入密码" class="layui-input" autocomplete="current-password">
+                </div>
+                <div class="layui-form-item">
+                    <button class="layui-btn login-btn" lay-submit lay-filter="login">立即登录</button>
+                </div>
+                <div class="login-links">
+                    还没有账号？<a href="{:url('user/register')}">去注册</a>
+                    <span style="margin: 0 10px; color: #ddd;">|</span>
+                    <a href="{:url('user/retrievePassword')}" style="color: #666;">找回密码</a>
+                </div>
+            </form>
+        </div>
+        <a href="/" class="home-link"><i class="layui-icon layui-icon-home"></i> 返回首页</a>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form, $ = layui.$, layer = layui.layer;
+            form.on('submit(login)', function(data){
+                var loader = layer.load(2, {shade: [0.1, '#fff']});
+                $.post("{:url('user/doLogin')}", data.field, function(res){
+                    layer.close(loader);
+                    if(res.code == 1){
+                        layer.msg(res.msg, {icon: 1, time: 1000}, function(){ location.href = '/'; });
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

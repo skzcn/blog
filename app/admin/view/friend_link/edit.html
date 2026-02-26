@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑友情链接</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        body { padding: 20px; background-color: #fff; }
+    </style>
+</head>
+<body>
+
+<form class="layui-form" action="" lay-filter="formEdit">
+    {if isset($info.id)}
+    <input type="hidden" name="id" value="{$info.id}">
+    {/if}
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">网站名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" value="{$info.name|default=''}" required lay-verify="required" placeholder="请输入网站名称" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">链接地址</label>
+        <div class="layui-input-block">
+            <input type="url" name="url" value="{$info.url|default=''}" required lay-verify="url" placeholder="http:// 或 https://" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">网站Logo</label>
+        <div class="layui-input-block">
+            <input type="text" name="logo" value="{$info.logo|default=''}" placeholder="(可选) 图标的完整URL" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">网站描述</label>
+        <div class="layui-input-block">
+            <textarea name="description" placeholder="(可选) 网站简短描述" class="layui-textarea">{$info.description|default=''}</textarea>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-inline">
+            <input type="number" name="sort" value="{$info.sort|default='100'}" required lay-verify="required" placeholder="数字越小越靠前" class="layui-input">
+        </div>
+    </div>
+
+    {if isset($info.id)}
+    <!-- 编辑时可以修改状态 -->
+    <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+            <input type="radio" name="status" value="0" title="待审核" {if condition="isset($info) && $info['status'] == 0"}checked{/if}>
+            <input type="radio" name="status" value="1" title="已通过" {if condition="!isset($info) || $info['status'] == 1"}checked{/if}>
+            <input type="radio" name="status" value="2" title="已拒绝" {if condition="isset($info) && $info['status'] == 2"}checked{/if}>
+        </div>
+    </div>
+    {/if}
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="btnSubmit">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+
+<script src="/static/layui/layui.js"></script>
+<script>
+layui.use(['form', 'jquery', 'layer'], function(){
+    var form = layui.form;
+    var $ = layui.jquery;
+    var layer = layui.layer;
+
+    form.on('submit(btnSubmit)', function(data){
+        var url = data.field.id ? "{:url('friend_link/edit')}" : "{:url('friend_link/add')}";
+        $.post(url, data.field, function(res){
+            if(res.code == 1){
+                layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                    var index = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(index);
+                });
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        });
+        return false;
+    });
+});
+</script>
+
+</body>
+</html>

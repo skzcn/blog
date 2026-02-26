@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: #0f172a; 
+            color: #f1f5f9; 
+            padding: 30px; 
+            overflow-x: hidden;
+        }
+        
+        .welcome-header {
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .welcome-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .stat-card .label { color: #94a3b8; font-size: 14px; margin-bottom: 10px; }
+        .stat-card .value { font-size: 28px; font-weight: 600; color: #fff; }
+        .stat-card .icon { 
+            position: absolute; 
+            right: 20px; 
+            top: 25px; 
+            font-size: 40px; 
+            color: rgba(56, 189, 248, 0.2); 
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .card-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #38bdf8;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .update-list { list-style: none; padding: 0; }
+        .update-item {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .update-item:last-child { border-bottom: none; }
+        .update-item .info { display: flex; flex-direction: column; }
+        .update-item .tag { 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            background: rgba(56, 189, 248, 0.1); 
+            color: #38bdf8;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="welcome-header">
+        <h1>Welcome, Dashboard</h1>
+        <p style="color: #64748b; margin-top: 5px;">尊敬的管理员 {$admin.username}，系统已稳健运行 {:floor((time()-$sys_info.start_time)/86400)} 天。</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card delay-1">
+            <div class="label">今日订单</div>
+            <div class="value">{$stats.today_order}</div>
+            <i class="layui-icon layui-icon-list icon"></i>
+        </div>
+        <div class="stat-card delay-2">
+            <div class="label">总用户量</div>
+            <div class="value">{$stats.total_user}</div>
+            <i class="layui-icon layui-icon-user icon"></i>
+        </div>
+        <div class="stat-card delay-3">
+            <div class="label">今日营收</div>
+            <div class="value">¥ {$stats.today_money|default='0.00'}</div>
+            <i class="layui-icon layui-icon-rmb icon"></i>
+        </div>
+        <div class="stat-card delay-4">
+            <div class="label">资源总数</div>
+            <div class="value">{$stats.total_article}</div>
+            <i class="layui-icon layui-icon-layer icon"></i>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="card-panel">
+            <div class="card-title">最近订单动态</div>
+            <div class="update-list">
+                {volist name="recent_orders" id="vo"}
+                <div class="update-item">
+                    <div class="info">
+                        <span style="font-weight: 500;">
+                            {if $vo.type == 2}余额充值{else}资源购买{/if} 
+                            (¥{$vo.price})
+                        </span>
+                        <span style="font-size: 13px; color: #64748b;">
+                            用户: {$vo.user.username|default='游客'} | 时间: {$vo.create_time}
+                        </span>
+                    </div>
+                    {if $vo.status == 1}
+                    <span class="tag">已支付</span>
+                    {else}
+                    <span class="tag" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">待支付</span>
+                    {/if}
+                </div>
+                {/volist}
+                {if condition="count($recent_orders) == 0"}
+                <div style="text-align: center; color: #64748b; padding: 20px;">暂无订单动态</div>
+                {/if}
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-title">系统信息</div>
+            <div style="font-size: 14px; color: #94a3b8;">
+                <p style="margin-bottom: 15px;">PHP Version: <span style="color: #fff; float: right;">{$sys_info.php_version}</span></p>
+                <p style="margin-bottom: 15px;">ThinkPHP: <span style="color: #fff; float: right;">{$sys_info.tp_version}</span></p>
+                <p style="margin-bottom: 15px;">MySQL: <span style="color: #fff; float: right;">{$sys_info.mysql_version}</span></p>
+                <p style="margin-bottom: 15px;">OS: <span style="color: #fff; float: right;">{$sys_info.os}</span></p>
+                <p style="margin-bottom: 15px;">运行时间: <span style="color: #fff; float: right;">{:floor((time()-$sys_info.start_time)/86400)} Days</span></p>
+            </div>
+            <hr style="border: 0.5px solid rgba(255,255,255,0.05); margin: 20px 0;">
+            <div style="text-align: center;">
+                <button class="layui-btn layui-btn-sm layui-btn-primary" onclick="location.reload()" style="background: transparent; border-color: #334155; color: #94a3b8;">刷新统计</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

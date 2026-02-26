@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>网站设置</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-form-label { width: 120px; }
+        .layui-input-block { margin-left: 150px; }
+    </style>
+</head>
+<body style="padding: 20px; background-color: #fff;">
+    <div class="layui-card">
+        <div class="layui-card-header">网站基础设置</div>
+        <div class="layui-card-body">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">网站名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_name" value="{$config.site_name}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">网站标题</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_title" value="{$config.site_title}" lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">关键词</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_keywords" value="{$config.site_keywords}" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">网站描述</label>
+                    <div class="layui-input-block">
+                        <textarea name="site_description" class="layui-textarea">{$config.site_description}</textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">网站Logo</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_logo" value="{$config.site_logo}" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">备案号</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_icp" value="{$config.site_icp}" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">底部版权</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="site_footer" value="{$config.site_footer}" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文章默认图</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="article_default_image" value="{$config.article_default_image|default='/static/images/default.jpg'}" placeholder="当文章无封面图时显示" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">热搜词配置</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="hot_search_words" value="{$config.hot_search_words|default='wordpress,源码,主题,教程,作品,工具,插件,前端'}" placeholder="用英文逗号分隔，如: wordpress,源码,主题" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">热门推荐数量</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="hot_article_limit" value="{$config.hot_article_limit|default='10'}" placeholder="默认为10" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="number" name="index_article_limit" value="{$config.index_article_limit|default='12'}" placeholder="默认为12" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">每页评论数量</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="comment_per_page" value="{$config.comment_per_page|default='10'}" placeholder="默认为10" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">普通用户下载限制</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="common_download_limit" value="{$config.common_download_limit|default='1'}" placeholder="每日下载次数限制，默认1" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">VIP用户下载限制</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="vip_download_limit" value="{$config.vip_download_limit|default='10'}" placeholder="每日下载次数限制，默认10" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">每日签到奖励</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="checkin_reward_amount" value="{$config.checkin_reward_amount|default='0.5'}" step="0.1" placeholder="签到赠送金币数，默认0.5" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">投稿平台抽成</label>
+                    <div class="layui-input-inline" style="width: 150px;">
+                        <input type="number" name="platform_fee" value="{$config.platform_fee|default='10'}" min="0" max="100" class="layui-input">
+                    </div>
+                    <div class="layui-form-mid layui-word-aux">% (投稿文章售卖后的平台抽成比例，默认10%)</div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">友情链接申请价格</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="friend_link_price" value="{$config.friend_link_price|default='0'}" placeholder="例如：10.00，设为0则代表免费" lay-verify="required" class="layui-input" step="0.01">
+                        <div class="layui-form-mid layui-word-aux">申请一条友情链接所需支付的金额 (元)。设置为 0 表示免费申请（需人工审核）。大于 0 则自动上线展示。</div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">订单超时时间</label>
+                    <div class="layui-input-block">
+                        <input type="number" name="order_expiration_time" value="{$config.order_expiration_time|default='30'}" placeholder="订单超时未支付自动关闭（分钟），填0则永不超时，默认30" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="save">保存设置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            form.on('submit(save)', function(data){
+                $.post("{:url('settings/site')}", data.field, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

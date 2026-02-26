@@ -1,0 +1,58 @@
+        {if $tab == 'friend_links'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>友情链接管理</h3>
+                <button class="layui-btn layui-btn-sm layui-btn-normal" onclick="openFriendLinkForm()">申请新友链</button>
+            </div>
+            
+            {if $config.friend_link_price > 0}
+            <div style="padding: 15px; margin-bottom: 20px; background-color: #fdf6ec; border-radius: 8px; border: 1px solid #faecd8; color: #e6a23c; font-size: 13px;">
+                <i class="layui-icon layui-icon-speaker"></i> 提示：本站开启了友链直通车服务。若免费申请未审核或被拒，您可以选择支付 <b>￥{$config.friend_link_price}</b> 极速上架。
+            </div>
+            {/if}
+
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th>网站名称</th>
+                        <th>主页链接</th>
+                        <th>状态</th>
+                        <th>申请时间</th>
+                        <th>操作</th>
+                    </tr> 
+                </thead>
+                <tbody>
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>
+                            <b>{$vo.name}</b>
+                            {if $vo.is_paid == 1} <span class="layui-badge layui-bg-orange">付费直通</span>{/if}
+                        </td>
+                        <td><a href="{$vo.url}" target="_blank" style="color: #448ef6;">{$vo.url}</a></td>
+                        <td>
+                            {if $vo.status == 1}
+                            <span class="layui-badge layui-bg-green">已通过</span>
+                            {elseif $vo.status == 0}
+                            <span class="layui-badge layui-bg-blue">待审核</span>
+                            {else}
+                            <span class="layui-badge layui-bg-red">已拒绝</span>
+                            {/if}
+                        </td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s'}</td>
+                        <td>
+                            {if $vo.status == 0 || $vo.status == 2}
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="editFriendLink({$vo.id})">重新申请</button>
+                            {else}
+                            <span style="color: #999; font-size: 12px;">已通过不可修改</span>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="5" style="text-align: center; color: #999; padding: 30px;">暂无友链记录</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+            <div id="page-box">{$list|raw}</div>
+        </section>
+        {/if}

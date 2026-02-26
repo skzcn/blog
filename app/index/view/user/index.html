@@ -1,0 +1,741 @@
+{assign name="title" value="会员中心" /}
+{include file="layout/header" /}
+    <link rel="stylesheet" href="/static/css/user_index.css">
+
+
+<div class="member-container">
+    <!-- Sidebar -->
+    <aside class="member-sidebar">
+        <div class="sidebar-card">
+            <div class="sidebar-user-info">
+                <div class="user-avatar-lg">
+                    {if !empty($user.avatar)}
+                        <img src="{$user.avatar}" style="width: 100%; height: 100%; border-radius: 30px; object-fit: cover;">
+                    {else /}
+                        <i class="layui-icon layui-icon-username"></i>
+                    {/if}
+                </div>
+                <div class="user-name-box">
+                    <h2>{$user.nickname|default=$user.username}</h2>
+                    <div class="user-reg-date">注册时间: {$user.create_time|date='Y-m-d'}</div>
+                </div>
+                <div class="vip-badge-sm" style="background: {if isset($user.vip_level) && $user.vip_level > 0}#f8cc67{else}#f5f5f5{/if}; color: {if isset($user.vip_level) && $user.vip_level > 0}#634a12{else}#666{/if};">
+                    <i class="layui-icon layui-icon-diamond"></i>
+                    {if isset($user.vip_level) && $user.vip_level > 0}VIP会员{else}普通用户{/if}
+                </div>
+                {if isset($user.vip_level) && $user.vip_level > 0}
+                <div class="user-reg-date" style="color: #e67e22; margin-top: 5px;">
+                    到期: {$user.vip_expire_time|date='Y-m-d'}
+                </div>
+                {/if}
+            </div>
+            
+            <div class="sidebar-stats-compact">
+                <div class="stats-label">每天下载数量({$user.vip_expire_time > time() ? $vip_limit : $common_limit})</div>
+                <div class="stats-link">
+                    <span>今日已用({$today_download_count})</span>
+                    <span>今日剩余({$user.vip_expire_time > time() ? max(0, $vip_limit - $today_download_count) : max(0, $common_limit - $today_download_count)})</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/user/index.html" class="menu-item {if $tab=='index'}active{/if}"><i class="layui-icon layui-icon-username"></i> 基本信息</a>
+                <a href="/user/index.html?tab=balance.html" class="menu-item {if $tab=='balance'}active{/if}"><i class="layui-icon layui-icon-rmb"></i> 我的余额</a>
+                <a href="/user/index.html?tab=vip.html" class="menu-item {if $tab=='vip'}active{/if} vip-item"><i class="layui-icon layui-icon-diamond"></i> 我的会员</a>
+                <a href="/user/index.html?tab=orders.html" class="menu-item {if $tab=='orders'}active{/if}"><i class="layui-icon layui-icon-file"></i> 我的订单</a>
+                <a href="/user/index.html?tab=downloads.html" class="menu-item {if $tab=='downloads'}active{/if}"><i class="layui-icon layui-icon-download-circle"></i> 下载记录</a>
+                <a href="/user/index.html?tab=favorites.html" class="menu-item {if $tab=='favorites'}active{/if}"><i class="layui-icon layui-icon-star"></i> 我的收藏</a>
+                <a href="/user/index.html?tab=promotion.html" class="menu-item {if $tab=='promotion'}active{/if}"><i class="layui-icon layui-icon-share"></i> 我的推广</a>
+                <a href="/user/index.html?tab=tickets.html" class="menu-item {if $tab=='tickets'}active{/if}"><i class="layui-icon layui-icon-help"></i> 我的工单</a>
+                <a href="/user/index.html?tab=contributions.html" class="menu-item {if $tab=='contributions'}active{/if}"><i class="layui-icon layui-icon-release"></i> 我的投稿</a>
+                <a href="/user/index.html?tab=friend_links.html" class="menu-item {if $tab=='friend_links'}active{/if}"><i class="layui-icon layui-icon-link"></i> 我的友链</a>
+                <a href="{:url('user/logout')}" class="menu-item"><i class="layui-icon layui-icon-logout"></i> 退出登录</a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="member-main">
+        {if $tab == 'index'}
+        <!-- Dashboard Section -->
+        <section class="content-section dashboard-section">
+            <div class="dashboard-user-header">
+                <div class="dashboard-avatar">
+                    {if !empty($user.avatar)}
+                        <img src="{$user.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    {else /}
+                        <i class="layui-icon layui-icon-username"></i>
+                    {/if}
+                </div>
+                <div class="dashboard-user-meta">
+                    <div class="meta-top">
+                        <h2>{$user.nickname|default=$user.username}</h2>
+                        <div class="header-actions">
+                            <a href="{:url('user/logout')}"><i class="layui-icon layui-icon-logout"></i> 退出登录</a>
+                            <a href="/user/index.html?tab=promotion.html"><i class="layui-icon layui-icon-share"></i> 我的推广</a>
+                        </div>
+                    </div>
+                    <div class="vip-badge-sm" style="background: {if isset($user.vip_level) && $user.vip_level > 0}#fef3c7{else}#f1f5f9{/if}; color: {if isset($user.vip_level) && $user.vip_level > 0}#d97706{else}#64748b{/if}; margin-top: 5px;">
+                        <i class="layui-icon layui-icon-diamond"></i>
+                        {if isset($user.vip_level) && $user.vip_level > 0}VIP会员{else}普通用户{/if}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in Button -->
+            <div class="checkin-container">
+                {if $has_checkin}
+                <button class="checkin-btn disabled" disabled>
+                    <i class="layui-icon layui-icon-ok-circle"></i> 今日已领 {$config.checkin_reward_amount|default='0.5'} 金币
+                </button>
+                {else}
+                <button class="checkin-btn active" onclick="doCheckin()">
+                    <i class="layui-icon layui-icon-auz"></i> 签到领取 {$config.checkin_reward_amount|default='0.5'} 金币
+                </button>
+                {/if}
+            </div>
+
+            <!-- Grid Cards -->
+            <div class="dashboard-grid">
+                <a href="/user/index.html?tab=balance.html" class="dash-card balance-card">
+                    <div class="dash-card-lbl">金币余额</div>
+                    <div class="dash-card-val"><i class="layui-icon layui-icon-diamond" style="font-size: 24px; color: #fff; margin-right: 5px;"></i> {$user.money|default=0|number_format=2}</div>
+                    <button class="dash-action-btn" onclick="event.preventDefault(); recharge()">充值</button>
+                </a>
+                <a href="/user/index.html?tab=contributions.html" class="dash-card balance-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <div class="dash-card-lbl">内容总收益</div>
+                    <div class="dash-card-val"><i class="layui-icon layui-icon-rmb" style="font-size: 24px; color: #fff; margin-right: 5px;"></i> {$user.author_earnings|default=0|number_format=2}</div>
+                    <button class="dash-action-btn" style="color: #059669;">查看</button>
+                </a>
+                <div class="dash-card-stack">
+                    <a href="/user/index.html?tab=vip.html" class="dash-card vip-status-card green">
+                        <div class="dash-card-content">
+                            <i class="layui-icon layui-icon-diamond"></i>
+                            <span>本站VIP会员</span>
+                        </div>
+                    </a>
+                    <a href="/user/index.html?tab=vip.html" class="dash-card vip-status-card gold">
+                        <div class="dash-card-content">
+                            <i class="layui-icon layui-icon-diamond"></i>
+                            <span>本站永久VIP</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Usage Stats (Moved down or themed) -->
+            <div class="section-title-box" style="margin-top: 40px;">
+                <h3>下载权限</h3>
+            </div>
+            <div class="usage-stats-grid">
+                <div class="usage-card green">
+                    <div class="usage-val">{$user.vip_expire_time > time() ? $vip_limit : $common_limit}</div>
+                    <div class="usage-lbl">每日总次数</div>
+                </div>
+                <div class="usage-card blue">
+                    <div class="usage-val">{$user.vip_expire_time > time() ? max(0, $vip_limit - $today_download_count) : max(0, $common_limit - $today_download_count)}</div>
+                    <div class="usage-lbl">今日剩余</div>
+                </div>
+            </div>
+
+            <!-- Quick Navigation Row -->
+            <div class="quick-nav-row">
+                <a href="/user/index.html" class="quick-nav-item">
+                    <div class="quick-nav-icon"><i class="layui-icon layui-icon-username"></i></div>
+                    <span>基本信息</span>
+                </a>
+                <a href="/user/index.html?tab=balance.html" class="quick-nav-item">
+                    <div class="quick-nav-icon"><i class="layui-icon layui-icon-rmb"></i></div>
+                    <span>我的余额</span>
+                </a>
+                <a href="/user/index.html?tab=vip.html" class="quick-nav-item">
+                    <div class="quick-nav-icon"><i class="layui-icon layui-icon-diamond"></i></div>
+                    <span>我的会员</span>
+                </a>
+                <a href="/user/index.html?tab=favorites.html" class="quick-nav-item">
+                    <div class="quick-nav-icon"><i class="layui-icon layui-icon-star"></i></div>
+                    <span>我的收藏</span>
+                </a>
+                <a href="/user/index.html?tab=orders.html" class="quick-nav-item">
+                    <div class="quick-nav-icon"><i class="layui-icon layui-icon-survey"></i></div>
+                    <span>我的订单</span>
+                </a>
+            </div>
+        </section>
+        {/if}
+
+        {if $tab == 'vip'}
+        <!-- VIP Membership Section -->
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>会员开通</h3>
+            </div>
+            <div class="vip-grid">
+                {volist name="vipLevels" id="vo"}
+                <div class="vip-card {if $vo.duration > 365}permanent{elseif $vo.duration >= 365}yearly{else}monthly{/if}">
+                    <div class="vip-card-header">{$vo.name}</div>
+                    <div class="vip-card-body">
+                        <div class="vip-price">{$vo.price}<span>金币</span></div>
+                        <ul class="vip-features">
+                            <li>尊享VIP会员特权{$vo.duration}天</li>
+                            <li>可获取专属免费资源</li>
+                            <li>每日可下载10个免费资源</li>
+                            <li>5x8小时在线人工答疑</li>
+                            <li>全站无限期补发源码</li>
+                        </ul>
+                        <a href="javascript:;" onclick="buyVip({$vo.id})" class="vip-buy-btn"><i class="layui-icon layui-icon-diamond"></i> 立即开通</a>
+                    </div>
+                </div>
+                {/volist}
+            </div>
+
+            <!-- CDK Section -->
+            <div class="section-title-box" style="margin-top: 40px;">
+                <h3>会员兑换</h3>
+            </div>
+            <div class="cdk-box">
+                <div class="cdk-title">使用CDK码兑换VIP特权</div>
+                <div class="cdk-input-group">
+                    <input type="text" placeholder="兑换码/CDK卡号" class="cdk-input" id="cdk-code">
+                    <button class="cdk-btn">立即兑换</button>
+                    <button class="cdk-btn" style="background: #ff9f43;">购买CDK</button>
+                </div>
+            </div>
+        </section>
+        {/if}
+
+        {if $tab == 'orders'}
+        <!-- Orders Table -->
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的订单</h3>
+            </div>
+            <table class="layui-table" lay-skin="line" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="text-align:center;">订单号</th>
+                        <th style="text-align:center;">名称</th>
+                        <th style="text-align:center;">价格</th>
+                        <th style="text-align:center;">状态</th>
+                        <th style="text-align:center;">操作</th>
+                    </tr> 
+                </thead>
+                <tbody>
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>{$vo.order_no}</td>
+                        <td>{$vo.title|default='系统消费'}</td>
+                        <td>¥ {$vo.price}</td>
+                        <td>
+                            {if $vo.status == 1}
+                            <span class="layui-badge layui-bg-green">已支付</span>
+                            {elseif $vo.status == 0 && isset($vo.is_expired) && $vo.is_expired}
+                            <span class="layui-badge" style="background-color:red!important;color:#fff!important;">已超时</span>
+                            {elseif $vo.status == 0 && isset($vo.expire_seconds) && $vo.expire_seconds > 0}
+                            <span class="layui-badge layui-bg-orange">待支付</span>
+                            {elseif $vo.status == 0}
+                            <span class="layui-badge layui-bg-orange">待支付</span>
+                            {else}
+                            <span class="layui-badge layui-bg-red">已取消</span>
+                            {/if}
+                        </td>
+                        <td>
+                            <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-normal" onclick='showOrderDetail({$vo|json_encode})'><i class="layui-icon layui-icon-read"></i> 查看详情</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="5" style="text-align: center; color: #999; padding: 30px;">暂无记录</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+            <div id="page-box">{$list|raw}</div>
+        </section>
+        {/if}
+
+        {if $tab == 'downloads'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>下载记录</h3>
+            </div>
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th>资源名称</th>
+                        <th>下载时间</th>
+                        <th>操作</th>
+                    </tr> 
+                </thead>
+                <tbody>
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>{$vo.title}</td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s'}</td>
+                        <td><a href="/article/details.html?id={$vo.article_id}.html" class="layui-btn layui-btn-xs">再次查看</a></td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">暂无记录</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+            <div id="page-box">{$list|raw}</div>
+        </section>
+        {/if}
+
+        {if $tab == 'favorites'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的收藏</h3>
+            </div>
+            <div class="layui-row layui-col-space15">
+                {volist name="list" id="vo"}
+                <div class="layui-col-md4">
+                    <div class="sidebar-card">
+                        <img src="{$vo.thumbnail|default=$config.article_default_image|default='/static/images/default.jpg'}" style="width: 100%; height: 150px; object-fit: cover;">
+                        <div style="padding: 10px;">
+                            <h4 style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{$vo.title}</h4>
+                            <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                                <span style="font-size: 12px; color: #999;">{$vo.create_time|date='Y-m-d'}</span>
+                                <a href="/article/details.html?id={$vo.article_id}.html" class="layui-btn layui-btn-xs layui-btn-primary">详情</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/volist}
+                {if condition="$list->isEmpty()"}
+                <div style="text-align: center; color: #999; padding: 50px;">暂无收藏资源</div>
+                {/if}
+            </div>
+            <div id="page-box">{$list|raw}</div>
+        </section>
+        {/if}
+
+        {if $tab == 'balance'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的余额</h3>
+            </div>
+            <div style="padding: 40px; text-align: center; background: #f8fafe; border-radius: 12px;">
+                <div style="font-size: 14px; color: #666;">当前可用余额</div>
+                <div style="font-size: 42px; font-weight: 800; color: #333; margin: 15px 0;">{$user.money|default=0|number_format=2} <span style="font-size: 18px;">金币</span></div>
+                <button class="layui-btn layui-btn-lg layui-btn-danger" style="border-radius: 30px; padding: 0 40px;" onclick="recharge()">立即充值</button>
+            </div>
+        </section>
+        {/if}
+
+        {if $tab == 'contributions'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的投稿</h3>
+                <button class="layui-btn layui-btn-sm" onclick="openContributionForm()">发布投稿</button>
+            </div>
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>状态</th>
+                        <th>投稿时间</th>
+                        <th>操作</th>
+                    </tr> 
+                </thead>
+                <tbody>
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>
+                            {$vo.title}
+                            {if $vo.status == 2 && !empty($vo.reject_reason)}
+                            <br><span style="color: #ff5722; font-size: 12px; margin-top: 5px; display: inline-block;">打回原因: {$vo.reject_reason}</span>
+                            {/if}
+                        </td>
+                        <td>
+                            {if $vo.status == 1}
+                            <span class="layui-badge layui-bg-green">已发布</span>
+                            {elseif $vo.status == 0}
+                            <span class="layui-badge layui-bg-blue">审核中</span>
+                            {else}
+                            <span class="layui-badge layui-bg-red">已退回</span>
+                            {/if}
+                        </td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s'}</td>
+                        <td>
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="editContribution({$vo.id})">编辑</button>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="4" style="text-align: center; color: #999; padding: 30px;">暂无投稿内容</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+        </section>
+        {/if}
+
+        {if $tab == 'friend_links'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>友情链接管理</h3>
+                <a href="javascript:;" onclick="showApplyFriend()" class="layui-btn layui-btn-sm layui-btn-normal">申请新友链</a>
+            </div>
+            
+            {if $config.friend_link_price > 0}
+            <div style="padding: 15px; margin-bottom: 20px; background-color: #fdf6ec; border-radius: 8px; border: 1px solid #faecd8; color: #e6a23c; font-size: 13px;">
+                <i class="layui-icon layui-icon-speaker"></i> 提示：本站开启了友链直通车服务。若免费申请未审核或被拒，您可以选择重新点击上方申请使用付费<strong>极速上架</strong>（展示期为 <span style="font-weight:bold;color:#f56c6c;">1个月</span> ）。
+            </div>
+            {/if}
+
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">网站名称</th>
+                        <th style="text-align: center;">主页链接</th>
+                        <th style="text-align: center;">状态</th>
+                        <th style="text-align: center;">申请时间</th>
+                        <th style="text-align: center;">到期时间</th>
+                        <th style="text-align: center;">操作</th>
+                    </tr> 
+                </thead>
+                <tbody style="text-align: center;">
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>
+                            <b>{$vo.name}</b>
+                            {if $vo.is_paid == 1} <span class="layui-badge layui-bg-orange">付费直通</span>{/if}
+                        </td>
+                        <td><a href="{$vo.url}" target="_blank" style="color: #448ef6;">{$vo.url}</a></td>
+                        <td>
+                            {if isset($vo.is_expired) && $vo.is_expired}
+                            <span class="layui-badge layui-bg-gray">已过期</span>
+                            {elseif $vo.status == 1}
+                            <span class="layui-badge layui-bg-green">已通过</span>
+                            {elseif $vo.status == 0}
+                            <span class="layui-badge layui-bg-blue">待审核</span>
+                            {else}
+                            <span class="layui-badge layui-bg-red">已拒绝</span>
+                            {/if}
+                        </td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s'}</td>
+                        <td style="color: #999; font-size: 13px;">{$vo.expire_date|default='长期有效'}</td>
+                        <td>
+                            {if $vo.status == 0 || $vo.status == 2}
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="editFriendLink({$vo.id})">重新申请</button>
+                            {else}
+                            <span style="color: #999; font-size: 12px;">已通过不可修改</span>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="6" style="text-align: center; color: #999; padding: 30px;">暂无友链记录</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+            <div id="page-box">{$list|raw}</div>
+        </section>
+        {/if}
+
+
+        {if $tab == 'tickets'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的工单</h3>
+                <button class="layui-btn layui-btn-sm layui-btn-normal" onclick="openTicketForm()">发起工单</button>
+            </div>
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th>主题</th>
+                        <th>状态</th>
+                        <th>发起时间</th>
+                    </tr> 
+                </thead>
+                <tbody>
+                    {volist name="list" id="vo"}
+                    <tr>
+                        <td>
+                            <b>{$vo.title}</b>
+                            <br><span style="color: #888; font-size: 13px;">{$vo.content}</span>
+                            {if !empty($vo.reply_content)}
+                            <div style="margin-top: 8px; padding: 10px; background-color: #f8f9fa; border-left: 3px solid #16baaa; font-size: 13px;">
+                                <span style="color: #16baaa; font-weight: bold;">客服回复:</span> {$vo.reply_content}
+                            </div>
+                            {/if}
+                        </td>
+                        <td>
+                            {if $vo.status == 2}
+                            <span class="layui-badge layui-bg-gray">已关闭</span>
+                            {elseif $vo.status == 1}
+                            <span class="layui-badge layui-bg-green">已回复</span>
+                            {else}
+                            <span class="layui-badge layui-bg-orange">待处理</span>
+                            {/if}
+                        </td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s'}</td>
+                    </tr>
+                    {/volist}
+                    {if condition="$list->isEmpty()"}
+                    <tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">暂无工单记录</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+        </section>
+        {/if}
+
+        {if $tab == 'promotion'}
+        <section class="content-section">
+            <div class="section-title-box">
+                <h3>我的推广</h3>
+            </div>
+            <div style="padding: 40px; text-align: center; background: #fffaf0; border: 1px dashed #ffdca1; border-radius: 12px;">
+                <div style="font-size: 18px; font-weight: 700; color: #e67e22; margin-bottom: 20px;">推广奖励计划</div>
+                <p style="color: #666; margin-bottom: 25px;">分享您的专属推广链接，邀请好友注册并消费，您将获得高达 10% 的佣金奖励！</p>
+                <div class="layui-input-inline" style="width: 300px;">
+                    <input type="text" readonly value="{:request()->domain()}/?ref={$user.id}" class="layui-input" style="text-align: center;">
+                </div>
+                <button class="layui-btn layui-btn-warm" onclick="layer.msg('链接已复制到剪贴板')">复制链接</button>
+            </div>
+        </section>
+        {/if}
+    </main>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="profileTpl" style="display: none; padding: 25px;">
+    <form class="layui-form" lay-filter="profileForm">
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <input type="text" value="{$user.username}" disabled class="layui-input layui-disabled">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">昵称</label>
+            <div class="layui-input-block">
+                <input type="text" name="nickname" value="{$user.nickname}" placeholder="设置一个好听的昵称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" name="email" value="{$user.email}" placeholder="联系邮箱" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">新密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" placeholder="不修改请留空" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top: 30px; text-align: right;">
+            <button class="layui-btn" lay-submit lay-filter="saveProfile">保存修改</button>
+        </div>
+    </form>
+</div>
+
+{include file="layout/footer" /}
+
+<script>
+    // Configuration object for JavaScript references to PHP template parsed variables
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    Object.assign(window.APP_CONFIG, {
+        url_vip_buy: "{:url('vip/buy')}",
+        url_user_recharge: "{:url('user/recharge')}",
+        url_user_checkin: "{:url('user/checkin')}",
+        url_user_profile: "{:url('user/profile')}",
+        url_user_submitTicket: "{:url('user/submitTicket')}",
+        url_user_submitContribution: "{:url('user/submitContribution')}",
+        url_user_getContribution: "{:url('user/getContribution')}",
+        url_user_getFriendLink: "{:url('user/getFriendLink')}",
+        url_pay_index: "{:url('index/pay/index')}",
+        url_user_cancelOrder: "{:url('user/cancelOrder')}",
+        checkin_reward_amount: "{$config.checkin_reward_amount|default='0.5'}"
+    });
+</script>
+<script src="/static/js/user_index.js"></script>
+
+<div id="ticketTpl" style="display: none;">
+    <div style="padding: 20px;">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">工单主题</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <input type="text" name="title" required lay-verify="required" placeholder="请简述您遇到的问题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label" style="width: 60px;">问题详情</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <textarea name="content" required lay-verify="required" placeholder="请详细描述问题，以便客服更快速为您解决！" class="layui-textarea" style="height: 150px;"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: right; margin-top: 30px; margin-bottom: 0;">
+                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveTicket">提交工单</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="contributionTpl" style="display: none;">
+    <div style="padding: 20px;">
+        <form class="layui-form" action="" lay-filter="contributionForm">
+            <input type="hidden" name="id" value="0">
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">文章分类</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <select name="category_id" lay-verify="required">
+                        <option value="">请选择文章分类</option>
+                        {volist name="categories" id="cat"}
+                        <option value="{$cat.id}">{$cat.name}</option>
+                        {if isset($cat.children)}
+                            {volist name="cat.children" id="sub"}
+                            <option value="{$sub.id}">&nbsp;&nbsp;&nbsp;&nbsp;├ {$sub.name}</option>
+                            {/volist}
+                        {/if}
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">文章大类</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <input type="text" name="title" required lay-verify="required" placeholder="请输入带有吸引力的文章大标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">文章售价</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <input type="number" name="price" value="0.00" step="0.01" min="0" required lay-verify="required" placeholder="输入售价 (填 0 则为所有人免费)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">下载链接</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <input type="text" name="resource_url" placeholder="如：网盘链接 (选填)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 60px;">提取密码</label>
+                <div class="layui-input-block" style="margin-left: 90px;">
+                    <input type="text" name="resource_pwd" placeholder="提取码/解压密码 (选填)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label" style="width: 60px;">文章正文</label>
+                <div class="layui-input-block" style="margin-left: 90px; border: 1px solid #e6e6e6; border-radius: 4px;">
+                    <div id="wangeditor-toolbar" style="border-bottom: 1px solid #e6e6e6;"></div>
+                    <div id="wangeditor-text" style="height: 300px;"></div>
+                    <textarea id="contribution-content-hidden" name="content" style="display: none;"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: right; margin-top: 30px; margin-bottom: 0;">
+                <button class="layui-btn" lay-submit lay-filter="saveContribution">确认提交</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 引入 wangEditor CDN -->
+<link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+<script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+
+<script>
+    // wangEditor 全局实例，用于后面销毁或读取内容
+    window.contributionEditor = null;
+    
+    // 监听弹窗打开时的渲染
+    function initWangEditor(content) {
+        if (window.contributionEditor) {
+            window.contributionEditor.destroy();
+            window.contributionEditor = null;
+        }
+
+        const { createEditor, createToolbar } = window.wangEditor;
+
+        const editorConfig = {
+            placeholder: '请输入文章正文内容... 投稿通过后将由管理员协助排版并发布',
+            MENU_CONF: {
+                uploadImage: {
+                    server: "{:url('upload/image')}",
+                    fieldName: 'file',
+                    maxFileSize: 5 * 1024 * 1024 // 5MB
+                },
+                uploadVideo: {
+                    server: "{:url('upload/video')}",
+                    fieldName: 'file',
+                    maxFileSize: 100 * 1024 * 1024 // 100MB
+                }
+            },
+            onChange(editor) {
+                // 当内容变化时，同步到隐藏的 textarea 中，供 layui 表单提交
+                document.getElementById('contribution-content-hidden').value = editor.getHtml();
+            }
+        };
+
+        window.contributionEditor = createEditor({
+            selector: '#wangeditor-text',
+            html: content || '',
+            config: editorConfig,
+            mode: 'default' // 'default' or 'simple'
+        });
+
+        const toolbarConfig = {};
+        const toolbar = createToolbar({
+            editor: window.contributionEditor,
+            selector: '#wangeditor-toolbar',
+            config: toolbarConfig,
+            mode: 'default'
+        });
+        
+        // 同步初次内容
+        document.getElementById('contribution-content-hidden').value = content || '';
+    }
+</script>
+
+<div id="friendLinkTpl" style="display: none;">
+    <div style="padding: 25px;">
+        <form class="layui-form" lay-filter="friendLinkForm">
+            <input type="hidden" name="id" value="0">
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站名称</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="text" name="name" required lay-verify="required" placeholder="请输入您的网站名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站链接</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="url" name="url" required lay-verify="required|url" placeholder="如：https://www.example.com" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 70px;">网站Logo</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <input type="url" name="logo" placeholder="Logo图片链接 (选填)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label" style="width: 70px;">网站简述</label>
+                <div class="layui-input-block" style="margin-left: 100px;">
+                    <textarea name="description" placeholder="简单描述一下您的网站 (选填)" class="layui-textarea" style="height: 80px;"></textarea>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 35px; border-top: 1px solid #f0f0f0; padding-top: 20px;">
+                <button class="layui-btn layui-btn-normal" style="padding: 0 30px; border-radius: 20px;" lay-submit lay-filter="saveFriendLink">提交免费审核</button>
+                {if $config.friend_link_price > 0}
+                <button type="button" class="layui-btn layui-btn-warm" style="padding: 0 30px; border-radius: 20px;" onclick="buyFriendLinkFn()">付费免审上架 (￥{$config.friend_link_price})</button>
+                {/if}
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+</body>
+</html>

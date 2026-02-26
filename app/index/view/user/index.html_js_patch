@@ -1,0 +1,83 @@
+        // ==========================
+        //  友链管理逻辑
+        // ==========================
+        window.openFriendLinkForm = function() {
+            var formContent = $('#friendLinkTpl');
+            formContent.find('form')[0].reset();
+            formContent.find('input[name="id"]').val(0);
+            
+            layer.open({
+                type: 1,
+                title: '申请友情链接',
+                area: ['550px', '450px'],
+                content: formContent,
+                success: function(){ form.render(); }
+            });
+        };
+
+        window.editFriendLink = function(id) {
+            var loading = layer.load(1);
+            $.get("{:url('user/getFriendLink')}", {id: id}, function(res){
+                layer.close(loading);
+                if(res.code == 1){
+                    var data = res.data;
+                    var formContent = $('#friendLinkTpl');
+                    form.val('friendLinkForm', {
+                        "id": data.id,
+                        "name": data.name,
+                        "url": data.url,
+                        "logo": data.logo,
+                        "description": data.description
+                    });
+                    
+                    layer.open({
+                        type: 1,
+                        title: '重新申请/编辑友情链接',
+                        area: ['550px', '450px'],
+                        content: formContent,
+                        success: function(){ form.render(); }
+                    });
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }, 'json');
+        };
+
+        // 免费提交申请
+        form.on('submit(saveFriendLink)', function(data){
+            var loading = layer.load(1);
+            $.post("{:url('user/submitFriendLink')}", data.field, function(res){
+                layer.close(loading);
+                if(res.code == 1){
+                    layer.msg(res.msg, {icon: 1, time: 1500}, function(){ location.reload(); });
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }, 'json');
+            return false;
+        });
+
+        // 付费购买直通
+        window.buyFriendLinkFn = function() {
+            var dataForm = form.val('friendLinkForm');
+            if(!dataForm.name || !dataForm.url) {
+                layer.msg('请输入网站名称和链接', {icon: 2});
+                return;
+            }
+            
+            var loading = layer.load(1);
+            $.post("{:url('user/buyFriendLink')}", dataForm, function(res){
+                layer.close(loading);
+                if(res.code == 1){
+                    layer.open({
+                        type: 2,
+                        title: '收银台 - 购买友链直通',
+                        area: ['500px', '450px'],
+                        content: res.url,
+                        shadeClose: true
+                    });
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }, 'json');
+        };

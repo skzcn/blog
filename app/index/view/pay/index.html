@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>选择支付方式</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/mobile.css">
+    <style>
+        body { background-color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .pay-container { padding: 30px; max-width: 400px; margin: 0 auto; }
+        .pay-header { margin-bottom: 15px; font-size: 16px; color: #666; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Countdown timer */
+        .pay-countdown {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #e6a23c;
+        }
+        .pay-countdown .cd-icon {
+            font-size: 16px;
+        }
+        .pay-countdown .cd-time {
+            font-weight: 700;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            color: #ff4444;
+            min-width: 50px;
+            text-align: center;
+        }
+        .pay-countdown .cd-label {
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* Order info bar */
+        .order-info-bar {
+            background: linear-gradient(135deg, #fff9f0, #fff3e0);
+            border: 1px solid #ffe0b2;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .order-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff5722;
+        }
+        .order-price span {
+            font-size: 14px;
+            font-weight: 400;
+            color: #999;
+        }
+        .order-no {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Expired overlay */
+        .pay-expired-mask {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 999;
+        }
+        .pay-expired-mask.show {
+            display: flex;
+        }
+        .pay-expired-mask .expired-icon {
+            font-size: 60px;
+            color: #ff4444;
+            margin-bottom: 15px;
+        }
+        .pay-expired-mask .expired-text {
+            font-size: 18px;
+            color: #666;
+            font-weight: 500;
+        }
+        .pay-expired-mask .expired-sub {
+            font-size: 13px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .pay-list { display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        
+        .pay-option {
+            flex: 1 0 45%;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: #fff;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none !important;
+        }
+        
+        .pay-option:hover { border-color: #aaa; background-color: #fcfcfc; }
+        .pay-option.active { border-color: #1E9FFF; border-width: 1px; box-shadow: 0 0 0 1px #1E9FFF inset; background-color: #f0faff; }
+        
+        .pay-icon { width: 32px; height: 32px; margin-right: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pay-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .pay-icon svg { width: 100%; height: 100%; }
+        
+        .submit-btn {
+            display: block;
+            width: 200px;
+            height: 45px;
+            line-height: 45px;
+            background: #ff5757;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 16px;
+            margin: 30px auto 0;
+            border: none;
+            cursor: pointer;
+            text-decoration: none !important;
+        }
+        .submit-btn:hover { background: #ff4040; color: #fff; }
+        .submit-btn i { margin-right: 5px; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<!-- Expired overlay -->
+<div class="pay-expired-mask" id="expiredMask">
+    <div class="expired-icon">⏰</div>
+    <div class="expired-text">订单已超时</div>
+    <div class="expired-sub">请返回重新下单</div>
+</div>
+
+<div class="pay-container">
+    <div class="pay-header">
+        <span>支付方式</span>
+        {if $expireSeconds > 0}
+        <div class="pay-countdown">
+            <span class="cd-label">付款倒计时</span>
+            <span class="cd-time" id="countdownTimer">--:--</span>
+        </div>
+        {/if}
+    </div>
+
+    <!-- Order info -->
+    <div class="order-info-bar">
+        <div>
+            <div class="order-price">¥{$orderPrice}<span> 元</span></div>
+            <div class="order-no">订单号: {$orderNo}</div>
+        </div>
+    </div>
+    
+    <div class="pay-list" id="payList">
+        {foreach $channels as $k => $vo}
+            {php}
+                $key = strtolower($vo['channel_key']);
+                $iconSvg = ''; 
+                
+                if (strpos($key, 'alipay') !== false) {
+                    $iconSvg = '<img src="/static/images/zfb.png" style="width: 100%; height: 100%; object-fit: contain;">';
+                } elseif (strpos($key, 'wx') !== false || strpos($key, 'wechat') !== false) {
+                     $iconSvg = '<img src="/static/images/wx.png" style="width: 100%; height: 100%; object-fit: contain;">';
+                } else {
+                     $iconSvg = '<img src="/static/images/wx.png" style="width: 100%; height: 100%; object-fit: contain;">';
+                }
+            {/php}
+            
+            <div class="pay-option {if $k==0}active{/if}" data-url="/pay/{$vo.channel_key}?order_no={$orderNo}">
+                <div class="pay-icon">
+                    {$iconSvg|raw}
+                </div>
+                <span>{$vo.name}</span>
+            </div>
+        {/foreach}
+    </div>
+
+    <button class="submit-btn" id="submitPay">
+        <i class="layui-icon layui-icon-cart"></i> 提交订单
+    </button>
+</div>
+
+<script src="/static/jquery.js"></script>
+<script>
+    var expireSeconds = {$expireSeconds|default=0};
+
+    $(function(){
+        // Countdown timer
+        if(expireSeconds > 0) {
+            var remaining = expireSeconds;
+            updateTimer(remaining);
+            
+            var interval = setInterval(function(){
+                remaining--;
+                if(remaining <= 0) {
+                    clearInterval(interval);
+                    // Show expired mask
+                    $('#expiredMask').addClass('show');
+                    $('#submitPay').prop('disabled', true).text('订单已超时');
+                    return;
+                }
+                updateTimer(remaining);
+            }, 1000);
+        } else if(expireSeconds === 0) {
+            // Already expired
+            $('#expiredMask').addClass('show');
+            $('#submitPay').prop('disabled', true).text('订单已超时');
+        }
+
+        function updateTimer(secs) {
+            var m = Math.floor(secs / 60);
+            var s = secs % 60;
+            var text = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+            $('#countdownTimer').text(text);
+            // Change color when less than 1 minute
+            if(secs < 60) {
+                $('#countdownTimer').css('color', '#ff0000');
+            }
+        }
+
+        // Click to select
+        $('.pay-option').on('click', function(){
+            $('.pay-option').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        // Submit button
+        $('#submitPay').on('click', function(){
+            if($(this).prop('disabled')) return;
+            var url = $('.pay-option.active').data('url');
+            if(url) {
+                window.parent.location.href = url;
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

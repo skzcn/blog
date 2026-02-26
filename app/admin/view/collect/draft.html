@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>采集草稿管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        /* 增强表格分页栏可读性 */
+        body .layui-table-page { padding: 8px 15px; background: #fff; border-top: 1px solid #f0f0f0; }
+        body .layui-laypage a, body .layui-laypage span { 
+            padding: 0 15px; height: 32px; line-height: 32px; font-size: 14px; 
+            color: #333; background-color: #f8f9fa; border: 1px solid #e2e2e2; margin-right: 5px;
+        }
+        body .layui-laypage .layui-laypage-curr .layui-laypage-em { background-color: #1E9FFF; }
+        body .layui-laypage .layui-laypage-curr em { color: #fff; font-weight: bold; }
+        body .layui-laypage select { height: 32px; padding: 0 5px; }
+        body .layui-laypage select, body .layui-laypage input { border-color: #e2e2e2; }
+    </style>
+</head>
+<body>
+    <div style="padding: 15px;">
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+            <button class="layui-btn layui-btn-normal layui-btn-sm" id="batchApprove"><i class="layui-icon layui-icon-ok"></i> 批量入库</button>
+            <button class="layui-btn layui-btn-danger layui-btn-sm" id="batchDelete"><i class="layui-icon layui-icon-delete"></i> 批量删除</button>
+            <div style="margin-left: auto;">
+                <select id="statusFilter" style="height:30px; border:1px solid #ccc; border-radius:4px; padding: 0 8px;">
+                    <option value="">全部状态</option>
+                    <option value="0" selected>待审核</option>
+                    <option value="1">已入库</option>
+                    <option value="2">已拒绝</option>
+                </select>
+            </div>
+        </div>
+        <table id="draftTable" lay-filter="draftTable"></table>
+    </div>
+
+    <script type="text/html" id="statusTpl">
+        {{# if(d.status == 0){ }}
+            <span class="layui-badge layui-bg-orange">待审核</span>
+        {{# } else if(d.status == 1){ }}
+            <span class="layui-badge layui-bg-green">已入库</span>
+        {{# } else { }}
+            <span class="layui-badge">已拒绝</span>
+        {{# } }}
+    </script>
+
+    <script type="text/html" id="downloadTpl">
+        {{# if(d.download_url){ }}
+            {{# if(d.is_paid_download == 1){ }}
+                <span class="layui-badge">收费</span> <a href="{{d.download_url}}" target="_blank" style="color:#FF5722;">{{(d.download_url||'').substring(0,30)}}...</a>
+            {{# } else { }}
+                <a href="{{d.download_url}}" target="_blank" style="color:#1E9FFF;">{{(d.download_url||'').substring(0,30)}}...</a>
+            {{# } }}
+        {{# } else { }}
+            <span style="color:#999;">无</span>
+        {{# } }}
+    </script>
+
+    <script type="text/html" id="barTpl">
+        <a class="layui-btn layui-btn-xs" lay-event="preview">预览</a>
+        {{# if(d.status == 0){ }}
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="approve">入库</a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+    </script>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['table', 'layer', 'jquery'], function(){
+            var table = layui.table;
+            var layer = layui.layer;
+            var $ = layui.jquery;
+
+            var tableIns = table.render({
+                elem: '#draftTable',
+                url: '{:url("collect/draft")}',
+                where: {status: '0'},
+                page: true,
+                limit: 15,
+                cols: [[
+                    {type: 'checkbox', fixed: 'left'},
+                    {field: 'id', title: 'ID', width: 60, sort: true},
+                    {field: 'title', title: '标题', minWidth: 200},
+                    {field: 'node_name', title: '来源节点', width: 120},
+                    {title: '下载链接', width: 180, templet: '#downloadTpl'},
+                    {title: '状态', width: 90, templet: '#statusTpl'},
+                    {field: 'create_time_text', title: '采集时间', width: 150},
+                    {title: '操作', width: 180, toolbar: '#barTpl', fixed: 'right'}
+                ]]
+            });
+
+            // Filter by status
+            $('#statusFilter').on('change', function(){
+                tableIns.reload({where: {status: $(this).val()}, page: {curr: 1}});
+            });
+
+            // Table row actions
+            table.on('tool(draftTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'preview'){
+                    $.post('{:url("collect/draftPreview")}', {id: data.id}, function(res){
+                        if(res.code == 1){
+                            var html = '<div style="padding:20px;">';
+                            if(res.data.download_url){
+                                html += '<div style="background:#f0f9eb; padding:10px; border-radius:4px; margin-bottom:15px;">';
+                                html += '<b>下载链接：</b><a href="' + res.data.download_url + '" target="_blank">' + res.data.download_url + '</a>';
+                                if(res.data.is_paid_download == 1){
+                                    html += ' <span class="layui-badge">收费下载</span>';
+                                }
+                                html += '</div>';
+                            }
+                            html += res.data.content + '</div>';
+                            layer.open({
+                                type: 1,
+                                title: res.data.title,
+                                area: ['800px', '600px'],
+                                content: html,
+                                shadeClose: true
+                            });
+                        }
+                    }, 'json');
+                } else if(obj.event === 'approve'){
+                    layer.confirm('确认将此文章入库？', function(index){
+                        $.post('{:url("collect/draftApprove")}', {id: data.id}, function(res){
+                            layer.close(index);
+                            layer.msg(res.msg, {icon: res.code ? 1 : 2});
+                            if(res.code) tableIns.reload();
+                        }, 'json');
+                    });
+                } else if(obj.event === 'del'){
+                    layer.confirm('确认删除此草稿？', function(index){
+                        $.post('{:url("collect/draftDelete")}', {id: data.id}, function(res){
+                            layer.close(index);
+                            layer.msg(res.msg, {icon: res.code ? 1 : 2});
+                            if(res.code) obj.del();
+                        }, 'json');
+                    });
+                }
+            });
+
+            // Batch approve
+            $('#batchApprove').click(function(){
+                var checkData = table.checkStatus('draftTable').data;
+                if(checkData.length === 0) return layer.msg('请先选择草稿');
+                var ids = checkData.map(function(d){ return d.id; }).join(',');
+                layer.confirm('确认将选中的 ' + checkData.length + ' 篇文章全部入库？', function(index){
+                    $.post('{:url("collect/draftBatchApprove")}', {ids: ids}, function(res){
+                        layer.close(index);
+                        layer.msg(res.msg, {icon: 1});
+                        tableIns.reload();
+                    }, 'json');
+                });
+            });
+
+            // Batch delete
+            $('#batchDelete').click(function(){
+                var checkData = table.checkStatus('draftTable').data;
+                if(checkData.length === 0) return layer.msg('请先选择草稿');
+                var ids = checkData.map(function(d){ return d.id; }).join(',');
+                layer.confirm('确认删除选中的 ' + checkData.length + ' 条草稿？', {icon: 3}, function(index){
+                    $.post('{:url("collect/draftBatchDelete")}', {ids: ids}, function(res){
+                        layer.close(index);
+                        layer.msg(res.msg, {icon: 1});
+                        tableIns.reload();
+                    }, 'json');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

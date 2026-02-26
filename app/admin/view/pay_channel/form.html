@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body style="padding: 20px;">
+    <form class="layui-form layui-form-pane" action="">
+        <input type="hidden" name="id" value="{$info.id|default='0'}">
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">支付名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" value="{$info.name|default=''}" lay-verify="required" placeholder="如：支付宝当面付" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">支付标识</label>
+            <div class="layui-input-block">
+                <input type="text" name="channel_key" value="{$info.channel_key|default=''}" lay-verify="required" placeholder="唯一标识，如 alipay" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">支付方式</label>
+            <div class="layui-input-block">
+                <select name="type" lay-filter="typeSelect">
+                    <option value="scan" {if isset($info.type) && $info.type=='scan'}selected{/if}>扫码 (Scan)</option>
+                    <option value="jump" {if isset($info.type) && $info.type=='jump'}selected{/if}>跳转 (Jump)</option>
+                    <option value="pc" {if isset($info.type) && $info.type=='pc'}selected{/if}>PC网页 (PC)</option>
+                    <option value="wap" {if isset($info.type) && $info.type=='wap'}selected{/if}>手机网页 (WAP)</option>
+                    <option value="personal_alipay" {if isset($info.type) && $info.type=='personal_alipay'}selected{/if}>个人支付宝 (Personal Alipay)</option>
+                    <option value="personal_wx" {if isset($info.type) && $info.type=='personal_wx'}selected{/if}>个人微信 (Personal WeChat)</option>
+                    <option value="lakala" {if isset($info.type) && $info.type=='lakala'}selected{/if}>拉卡拉 (Lakala)</option>
+                    <option value="jialian" {if isset($info.type) && $info.type=='jialian'}selected{/if}>嘉联支付 (Jialian)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item" id="field_mch_id">
+            <label class="layui-form-label" id="label_mch_id">商户ID</label>
+            <div class="layui-input-block">
+                <input type="text" name="mch_id" value="{$info.mch_id|default=''}" placeholder="支付平台商户ID / 账号" class="layui-input">
+            </div>
+        </div>
+
+        <!-- Personal QR Upload Field -->
+        <div class="layui-form-item" id="field_qr_upload" style="display: none;">
+            <label class="layui-form-label">个人收款码</label>
+            <div class="layui-input-block">
+                <button type="button" class="layui-btn" id="btn_upload_qr">
+                    <i class="layui-icon">&#xe67c;</i> 上传二维码并解析
+                </button>
+                <input type="file" id="file_qr_input" accept="image/*" style="display: none;">
+                <div class="layui-form-mid layui-word-aux" style="margin-left: 10px;">系统将自动解析二维码内容并保存，不直接存储图片</div>
+            </div>
+        </div>
+
+        <div class="layui-form-item" id="field_mch_key">
+            <label class="layui-form-label" id="label_mch_key">商户KEY</label>
+            <div class="layui-input-block">
+                <textarea name="mch_key" id="input_mch_key" placeholder="公钥 / Key / 二维码内容" class="layui-textarea">{$info.mch_key|default=''}</textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item" id="field_mch_secret">
+            <label class="layui-form-label" id="label_mch_secret">商户密钥</label>
+            <div class="layui-input-block">
+                <textarea name="mch_secret" id="label_mch_secret_input" placeholder="私钥 / Secret / 密码" class="layui-textarea">{$info.mch_secret|default=''}</textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">MD5 Key</label>
+            <div class="layui-input-block">
+                <input type="text" name="md5_key" value="{$info.md5_key|default=''}" placeholder="易支付专用的MD5密钥 (若为空则使用商户密钥)" class="layui-input">
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">支付路由</label>
+            <div class="layui-input-block">
+                <input type="text" name="route" value="{$info.route|default='/pay/alipay'}" placeholder="处理该支付的路由地址" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="checkbox" name="status" lay-skin="switch" lay-text="启用|禁用" value="1" {if !isset($info.status) || $info.status==1}checked{/if}>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="save">保存</button>
+            </div>
+        </div>
+    </form>
+
+    <script src="/static/layui/layui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            // Field Toggle Logic
+            function updateFields(type) {
+                // Reset
+                $('#field_mch_id').show();
+                $('#field_mch_key').show();
+                $('#field_mch_secret').show();
+                $('#field_qr_upload').hide();
+                $('#label_mch_id').text('商户ID');
+                $('#label_mch_key').text('商户KEY');
+                $('#label_mch_secret').text('商户密钥');
+
+                if (type === 'personal_alipay' || type === 'personal_wx') {
+                    $('#field_qr_upload').show();
+                    $('#label_mch_key').text('二维码内容');
+                    $('#input_mch_key').attr('placeholder', '此处将自动填充二维码解析后的内容');
+                    $('#field_mch_secret').hide(); 
+                    $('#label_mch_id').text('备注名称');
+                } else if (type === 'lakala' || type === 'jialian') {
+                    $('#label_mch_id').text('账号');
+                    $('#label_mch_key').text('终端号/Key');
+                    $('#label_mch_secret').text('密码');
+                }
+            }
+
+            form.on('select(typeSelect)', function(data){
+                updateFields(data.value);
+            });
+            
+            // Initial call
+            var initialType = $('select[name="type"]').val();
+            updateFields(initialType);
+
+            // QR Code Upload & Decode Logic
+            $('#btn_upload_qr').click(function(){
+                $('#file_qr_input').click();
+            });
+
+            $('#file_qr_input').change(function(e){
+                var file = e.target.files[0];
+                if(!file) return;
+
+                var reader = new FileReader();
+                reader.onload = function(event){
+                    var img = new Image();
+                    img.onload = function(){
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        context.drawImage(img, 0, 0, img.width, img.height);
+                        var imageData = context.getImageData(0, 0, img.width, img.height);
+                        
+                        // Decode
+                        if(typeof jsQR === 'function') {
+                            var code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: "dontInvert",
+                            });
+                            if(code) {
+                                $('#input_mch_key').val(code.data);
+                                layer.msg('二维码解析成功！', {icon: 1});
+                            } else {
+                                layer.msg('无法解析该二维码，请确保图片清晰', {icon: 2});
+                            }
+                        } else {
+                            layer.msg('JSQR 库加载失败，请检查网络 (CDN)', {icon: 2});
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            form.on('submit(save)', function(data){
+                // switch处理
+                if (!data.field.status) data.field.status = 0;
+
+                $.post("{:url('pay_channel/save')}", data.field, function(res){
+                    if(res.code === 1){
+                        parent.layer.msg(res.msg, {icon: 1});
+                        var index = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(index);
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

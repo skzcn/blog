@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>工单管理</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <style>
+        body { padding: 20px; background-color: #f2f2f2; }
+        .layui-card { border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0,0,0,.05); }
+    </style>
+</head>
+<body>
+
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="ticketTable" lay-filter="ticketTable"></table>
+    </div>
+</div>
+
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 2){ }}
+    <span class="layui-badge layui-bg-gray">已关闭</span>
+    {{# } else if(d.status == 1){ }}
+    <span class="layui-badge layui-bg-green">已回复</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-orange">待处理</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="bar">
+    {{# if(d.status == 0){ }}
+    <a class="layui-btn layui-btn-xs" lay-event="reply">回复</a>
+    <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="close">关闭</a>
+    {{# } else if(d.status == 1){ }}
+    <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="close">关闭</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script src="/static/layui/layui.js"></script>
+<script>
+layui.use(['table', 'form', 'layer', 'util'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var util = layui.util;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#ticketTable',
+        url: '{:url("ticket/index")}',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'username', title: '提交用户', width: 120},
+            {field: 'title', title: '工单内容(主题)', width: 300, templet: function(d){
+                return '<b>'+d.title+'</b><br/><span style="color:#999;font-size:12px;">'+d.content+'</span>';
+            }},
+            {field: 'reply_content', title: '客服回复', minWidth: 200},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'create_time', title: '提交时间', width: 160, templet: function(d){
+                return util.toDateString(d.create_time * 1000);
+            }},
+            {fixed: 'right', title: '操作', toolbar: '#bar', width: 220}
+        ]]
+    });
+
+    table.on('tool(ticketTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'del'){
+            layer.confirm('确认删除查该工单吗？', function(index){
+                $.post('{:url("ticket/delete")}', {id: data.id}, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        obj.del();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if (obj.event === 'close'){
+            layer.confirm('确认直接关闭该工单吗？', function(index){
+                $.post('{:url("ticket/close")}', {id: data.id}, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        table.reload('ticketTable');
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'reply'){
+            layer.prompt({
+                formType: 2,
+                value: data.reply_content || '',
+                title: '回复工单',
+                area: ['400px', '200px']
+            }, function(value, index, elem){
+                $.post('{:url("ticket/reply")}', {
+                    id: data.id,
+                    reply_content: value
+                }, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                        layer.close(index);
+                        table.reload('ticketTable');
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                });
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>

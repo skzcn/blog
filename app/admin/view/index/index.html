@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>后台控制面板 - Premium Edition</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --sidebar-bg: rgba(30, 41, 59, 0.7);
+            --header-bg: rgba(15, 23, 42, 0.8);
+            --accent-color: #38bdf8;
+            --text-color: #f1f5f9;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Sidebar */
+        .layui-layout-admin .layui-side {
+            width: 240px;
+            background: #111827 !important; /* Deeper, solid background for reliability */
+            border-right: 1px solid var(--glass-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .layui-logo {
+            background: #111827 !important;
+            font-size: 20px !important;
+            font-weight: 600;
+            color: var(--accent-color) !important;
+            letter-spacing: 1px;
+            height: 70px !important;
+            line-height: 70px !important;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .layui-nav-tree {
+            background: transparent !important;
+            padding: 10px 0;
+            width: 100% !important;
+        }
+
+        .layui-nav-item {
+            line-height: 50px !important;
+        }
+
+        .layui-nav-item > a {
+            height: 50px !important;
+            line-height: 50px !important;
+            padding-left: 25px !important;
+            color: #94a3b8 !important;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .layui-nav-item a:hover {
+            background: rgba(56, 189, 248, 0.05) !important;
+            color: var(--accent-color) !important;
+        }
+
+        .layui-nav-itemed > a {
+            color: var(--text-color) !important;
+        }
+
+        /* Sub-menu styling */
+        .layui-nav-child {
+            background: rgba(0, 0, 0, 0.15) !important; /* Subtle contrast for depth */
+            padding: 5px 0;
+        }
+
+        .layui-nav-child dd a {
+            padding-left: 55px !important; /* Deeper indentation for hierarchy */
+            height: 45px !important;
+            line-height: 45px !important;
+            color: #64748b !important;
+            font-size: 13px;
+        }
+
+        .layui-nav-child dd.layui-this a {
+            background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%) !important;
+            color: #fff !important;
+            border-radius: 0 25px 25px 0; /* Modern pill shape on one side */
+            margin-right: 15px;
+            box-shadow: 4px 0 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .layui-nav-bar {
+            background-color: var(--accent-color) !important;
+        }
+
+        /* Glassmorphism Header */
+        .layui-layout-admin .layui-header {
+            background: var(--header-bg) !important;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 70px !important;
+        }
+
+        .layui-header .layui-nav .layui-nav-item a {
+            color: var(--text-color) !important;
+        }
+
+        .layui-header .layui-nav-child {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+        }
+
+        .layui-layout-admin .layui-body {
+            top: 70px !important;
+            left: 240px !important;
+            background: #0f172a;
+            bottom: 0 !important; /* Changed to 0 to reach the floor */
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px 12px 0 0; /* Only top radius to sit flush at bottom */
+            overflow: hidden;
+            background: #1e293b;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Footer - move to a small float or hide if preferred */
+        .layui-layout-admin .layui-footer {
+            background: transparent !important;
+            color: #475569;
+            text-align: right;
+            border-top: none;
+            right: 20px !important;
+            left: auto !important;
+            height: 30px !important;
+            line-height: 30px !important;
+            font-size: 11px;
+            pointer-events: none; /* Don't block clicks */
+            z-index: 1000;
+        }
+
+        /* Scrollbar aesthetics */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Animation */
+        @keyframes fadeInMain {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .layui-body { animation: fadeInMain 0.5s ease-out; }
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">NEON BLOG</div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <i class="layui-icon layui-icon-username" style="margin-right: 8px;"></i>
+                    {$admin.username}
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;" onclick="openPage('基本资料', '{:url(\'index/welcome\')}')">基本资料</a></dd>
+                    <dd><a href="{:url('login/logout')}">安全退出</a></dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+
+    <div class="layui-side">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" lay-filter="nav">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-app" style="margin-right: 10px;"></i>核心管理</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;" onclick="openPage('文章管理', '{:url(\'article/index\')}')">文章管理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('采集管理', '{:url(\'collect/index\')}')">采集管理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('分类管理', '{:url(\'category/index\')}')">分类管理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('用户管理', '{:url(\'user/index\')}')">用户管理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('广告管理', '{:url(\'ad/index\')}')">广告管理</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-dialogue" style="margin-right: 10px;"></i>互动管理</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;" onclick="openPage('评论管理', '{:url(\'comment/index\')}')">评论列表</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('友情链接', '{:url(\'friend_link/index\')}')">友情链接</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('敏感词库', '{:url(\'comment/words\')}')">敏感词过滤</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('工单处理', '{:url(\'ticket/index\')}')">工单处理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('投稿审核', '{:url(\'contribution/index\')}')">投稿审核</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-cart" style="margin-right: 10px;"></i>业务订单</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;" onclick="openPage('所有订单', '{:url(\'order/index\')}')">销售记录</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('余额记录', '{:url(\'order/balance\')}')">充值历史</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-set" style="margin-right: 10px;"></i>系统架构</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;" onclick="openPage('网站设置', '{:url(\'settings/site\')}')">全局参数</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('广告设置', '{:url(\'settings/ad\')}')">广告设置</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('VIP等级设置', '{:url(\'vip/index\')}')">VIP 阶梯</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('用户组管理', '{:url(\'auth/groups\')}')">权限配置</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('支付设置', '{:url(\'settings/pay\')}')">金融对接</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('兑换设置', '{:url(\'settings/exchange\')}')">兑换管理</a></dd>
+                        <dd><a href="javascript:;" onclick="openPage('邮件设置', '{:url(\'settings/email\')}')">通知网关</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <div style="padding: 20px 20px 0 20px; height: calc(100% - 20px);">
+            <div class="iframe-container">
+                <iframe id="main-frame" src="{:url('index/welcome')}" frameborder="0" style="width: 100%; height: 100%;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-footer">
+        Premium Control Panel &copy; 2024 Powered by ThinkPHP8
+    </div>
+</div>
+
+<script src="/static/layui/layui.js"></script>
+<script>
+    layui.use(['element', 'layer'], function(){
+        var element = layui.element;
+        var layer = layui.layer;
+    });
+
+    function openPage(title, url) {
+        var frame = document.getElementById('main-frame');
+        frame.style.opacity = '0';
+        frame.src = url;
+        frame.onload = function() {
+            frame.style.transition = 'opacity 0.4s';
+            frame.style.opacity = '1';
+        };
+    }
+</script>
+</body>
+</html>

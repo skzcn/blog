@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>广告编辑</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .container { padding: 20px; background-color: #fff; }
+        .layui-form-label { width: 120px; }
+        .layui-input-block { margin-left: 150px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="layui-breadcrumb" style="margin-bottom: 20px;">
+            <a href="{:url('ad/index')}">广告管理</a>
+            <a><cite>{$info ? '编辑广告' : '添加广告'}</cite></a>
+        </div>
+
+        <form class="layui-form" action="">
+            <input type="hidden" name="id" value="{$info.id|default='0'}">
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">广告标题</label>
+                <div class="layui-input-block">
+                    <input type="text" name="title" value="{$info.title|default=''}" lay-verify="required" placeholder="请输入广告标题" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">广告位置</label>
+                <div class="layui-input-block">
+                    <select name="position" lay-verify="required">
+                        <option value="1" {if condition="$info && $info.position == 1"}selected{/if}>首页右侧侧边栏</option>
+                        <option value="2" {if condition="$info && $info.position == 2"}selected{/if}>文章页-上方广告位</option>
+                        <option value="3" {if condition="$info && $info.position == 3"}selected{/if}>文章页-侧边栏广告位</option>
+                        <option value="4" {if condition="$info && $info.position == 4"}selected{/if}>文章页-正文(资源区上方)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">广告类型</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="type" value="1" title="图片链接" {if condition="!$info || $info.type == 1"}checked{/if} lay-filter="type">
+                    <input type="radio" name="type" value="2" title="JS代码" {if condition="$info && $info.type == 2"}checked{/if} lay-filter="type">
+                </div>
+            </div>
+
+            <div id="type-image" class="{if condition="$info && $info.type == 2"}layui-hide{/if}">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">图片地址</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="image_url" id="image_url" value="{$info.image_url|default=''}" placeholder="可手动填写或上传" class="layui-input">
+                        <button type="button" class="layui-btn layui-btn-primary" id="upload-btn" style="margin-top: 10px;">
+                            <i class="layui-icon">&#xe67c;</i>上传图片
+                        </button>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">跳转链接</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="link_url" value="{$info.link_url|default=''}" placeholder="点击广告跳转的URL" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div id="type-js" class="{if condition="!$info || $info.type == 1"}layui-hide{/if}">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">JS脚本代码</label>
+                    <div class="layui-input-block">
+                        <textarea name="js_code" placeholder="输入谷歌广告等JS代码" class="layui-textarea">{$info.js_code|default=''}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">排序</label>
+                <div class="layui-input-block">
+                    <input type="number" name="sort" value="{$info.sort|default='0'}" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="status" lay-skin="switch" lay-text="上架|下架" value="1" {if condition="!$info || $info.status == 1"}checked{/if}>
+                </div>
+            </div>
+
+            <div class="layui-form-item" style="margin-top: 40px;">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="save">保存广告</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'upload'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var upload = layui.upload;
+            var $ = layui.$;
+
+            // 监听类型切换
+            form.on('radio(type)', function(data){
+                if(data.value == 1){
+                    $('#type-image').removeClass('layui-hide');
+                    $('#type-js').addClass('layui-hide');
+                }else{
+                    $('#type-image').addClass('layui-hide');
+                    $('#type-js').removeClass('layui-hide');
+                }
+            });
+
+            // 图片上传
+            upload.render({
+                elem: '#upload-btn',
+                url: "{:url('upload/image')}",
+                done: function(res){
+                    if(res.errno === 0){
+                        $('#image_url').val(res.data[0].url);
+                        layer.msg('上传成功');
+                    } else {
+                        layer.msg(res.message || '上传失败', {icon: 2});
+                    }
+                }
+            });
+
+            // 提交处理
+            form.on('submit(save)', function(data){
+                var url = data.field.id > 0 ? "{:url('ad/edit')}" : "{:url('ad/add')}";
+                // 处理 switch 状态，如果没勾选则没有该字段
+                if(!data.field.status) data.field.status = 0;
+                
+                $.post(url, data.field, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1, time: 1000}, function(){
+                            location.href = "{:url('ad/index')}";
+                        });
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>支付通道</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css" />
+  </head>
+  <body style="padding: 20px; background-color: #fff">
+    <div class="layui-card">
+      <div class="layui-card-header">
+        支付通道
+        <button
+          class="layui-btn layui-btn-sm layui-btn-normal"
+          style="float: right; margin-top: 10px"
+          onclick="add()"
+        >
+          新增
+        </button>
+      </div>
+      <div class="layui-card-body">
+        <table id="payTable" lay-filter="payTable"></table>
+      </div>
+    </div>
+
+    <script type="text/html" id="bar">
+      <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+      <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"
+        >删除</a
+      >
+    </script>
+
+    <script type="text/html" id="statusTpl">
+      {{# if(d.status == 1){ }}
+      <span class="layui-badge layui-bg-green">启用</span>
+      {{# } else { }}
+      <span class="layui-badge layui-bg-gray">禁用</span>
+      {{# } }}
+    </script>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+      var table, layer;
+      layui.use(["table", "layer"], function () {
+        table = layui.table;
+        layer = layui.layer;
+        var $ = layui.$;
+
+        table.render({
+          elem: "#payTable",
+          url: "{:url('pay_channel/index')}",
+          cols: [
+            [
+              { field: "id", title: "ID", width: 80, sort: true },
+              { field: "name", title: "支付名称", width: 150 },
+              { field: "channel_key", title: "支付标识", width: 120 },
+              { field: "type", title: "支付方式", width: 100 },
+              { field: "mch_id", title: "商户ID", width: 150 },
+              { field: "scene", title: "支付场景", width: 100 },
+              {
+                field: "status",
+                title: "状态",
+                templet: "#statusTpl",
+                width: 100,
+              },
+              { field: "create_time", title: "创建时间", width: 180 },
+              { fixed: "right", title: "操作", toolbar: "#bar", width: 150 },
+            ],
+          ],
+        });
+
+        // 行工具栏事件
+        table.on("tool(payTable)", function (obj) {
+          var data = obj.data;
+          if (obj.event === "del") {
+            layer.confirm("确认删除该通道吗？", function (index) {
+              $.post(
+                "{:url('pay_channel/delete')}",
+                { id: data.id },
+                function (res) {
+                  if (res.code === 1) {
+                    obj.del();
+                    layer.close(index);
+                    layer.msg(res.msg, { icon: 1 });
+                  } else {
+                    layer.msg(res.msg, { icon: 2 });
+                  }
+                },
+                "json",
+              );
+            });
+          } else if (obj.event === "edit") {
+            edit(data.id);
+          }
+        });
+      });
+
+      function add() {
+        openForm("新增通道", "{:url('pay_channel/form')}");
+      }
+
+      function edit(id) {
+        openForm("编辑通道", "{:url('pay_channel/form')}?id=" + id);
+      }
+
+      function openForm(title, url) {
+        layui.layer.open({
+          type: 2,
+          title: title,
+          content: url,
+          area: ["700px", "550px"],
+          end: function () {
+            table.reload("payTable");
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

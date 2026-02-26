@@ -1,0 +1,89 @@
+{include file="layout/header" /}
+
+<link rel="stylesheet" href="/static/css/search.css">
+
+<div class="container search-main-content">
+    
+    <div class="search-header">
+        <div class="search-header-icon">
+            <i class="layui-icon layui-icon-search"></i>
+        </div>
+        <div class="search-header-info">
+            <h2>关于 <span>{if $keyword}"{$keyword}"{else}全部资源{/if}</span> 的搜索结果</h2>
+            <p>共为您找到 <span style="color: #ff5722; font-weight: bold;">{$articles->total()}</span> 个相关资源项目</p>
+        </div>
+    </div>
+
+    {if $articles->isEmpty()}
+    <div style="text-align: center; padding: 80px 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+        <i class="layui-icon layui-icon-search" style="font-size: 80px; display: block; margin-bottom: 20px; color: #eee;"></i>
+        <h3 style="font-size: 18px; color: #666; margin-bottom: 10px;">没有找到相关内容</h3>
+        <p style="color: #999; font-size: 14px;">请尝试更换搜索关键词或减少过滤限制条件</p>
+        <div style="margin-top: 30px;">
+            <a href="/" class="layui-btn layui-btn-primary" style="border-radius: 20px; padding: 0 30px;">返回首页</a>
+        </div>
+    </div>
+    {else}
+    <div class="resource-grid">
+        {volist name="articles" id="vo"}
+        <div class="resource-card">
+            <div class="card-thumb">
+                <a href="/article/details.html?id={$vo.id}.html">
+                    {if $vo.thumbnail}
+                    <img src="{$vo.thumbnail}" alt="{$vo.title}">
+                    {else}
+                    <img src="{$config.article_default_image|default='/static/images/default.jpg'}" alt="{$vo.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {/if}
+                </a>
+                
+                <div class="card-badges">
+                    <div class="badge-left">
+                        {if condition="$vo.is_hot == 1"}
+                        <span class="tag-top">置顶</span>
+                        {/if}
+                    </div>
+                    <div class="badge-right">
+                        {if condition="$vo.is_vip_free == 1"}
+                        <span class="tag-vip">VIP</span>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="card-info-row">
+                    <span class="dot-cat"></span>
+                    <a href="/?cat={$vo.category.id}.html" class="cat-name-link">{$vo.category.name}</a>
+                    <span>·</span>
+                    <span>{$vo.create_time|date='Y-m-d'}</span>
+                </div>
+                
+                <a href="/article/details.html?id={$vo.id}.html" class="res-title">{$vo.title}</a>
+                
+                <div class="res-desc">
+                    {$vo.description|default='暂无描述...'}
+                </div>
+
+                <div class="card-footer">
+                    <div class="meta-group">
+                        <div class="meta-item"><i class="layui-icon layui-icon-read"></i>{$vo.views}</div>
+                        <div class="meta-item"><i class="layui-icon layui-icon-star"></i>0</div>
+                    </div>
+                    <div class="meta-item" style="color: #ff5722; font-weight: bold;">
+                        {if $vo.price > 0}￥{$vo.price}{else}免费{/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {/volist}
+    </div>
+
+    <!-- Pagination -->
+    <div class="search-pagination">
+        {$articles->render()|raw}
+    </div>
+    {/if}
+
+</div>
+
+{include file="layout/footer" /}

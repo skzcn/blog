@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>广告设置</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-form-label { width: 150px; }
+        .layui-input-block { margin-left: 180px; }
+        .layui-card { margin-bottom: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body style="padding: 20px; background-color: #f2f2f2;">
+    <div class="layui-card">
+        <div class="layui-card-header" style="font-weight: bold; border-bottom: 1px solid #eee;">全局广告开关</div>
+        <div class="layui-card-body">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">广告全局状态</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_global_status" lay-skin="switch" lay-text="开启|关闭" value="1" {if condition="isset($config.ad_global_status) && $config.ad_global_status == 1"}checked{/if}>
+                    </div>
+                    <div class="layui-form-mid layui-word-aux" style="margin-left: 180px;">一键关闭全站所有广告位</div>
+                </div>
+                
+                <div class="layui-form-item">
+                    <label class="layui-form-label">VIP免广告</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_vip_exempt" lay-skin="switch" lay-text="开启|关闭" value="1" {if condition="isset($config.ad_vip_exempt) && $config.ad_vip_exempt == 1"}checked{/if}>
+                    </div>
+                    <div class="layui-form-mid layui-word-aux" style="margin-left: 180px;">开启后，VIP会员登录状态下不显示广告</div>
+                </div>
+
+                <hr class="layui-border-blue">
+                <div style="padding: 10px 0; color: #1e9fff; font-weight: bold;"><i class="layui-icon layui-icon-layer"></i> 分位置控制</div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">首页侧边栏广告</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_pos_1_status" lay-skin="switch" lay-text="展示|隐藏" value="1" {if condition="!isset($config.ad_pos_1_status) || $config.ad_pos_1_status == 1"}checked{/if}>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文章页-上方广告</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_pos_2_status" lay-skin="switch" lay-text="展示|隐藏" value="1" {if condition="!isset($config.ad_pos_2_status) || $config.ad_pos_2_status == 1"}checked{/if}>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文章页-侧边栏广告</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_pos_3_status" lay-skin="switch" lay-text="展示|隐藏" value="1" {if condition="!isset($config.ad_pos_3_status) || $config.ad_pos_3_status == 1"}checked{/if}>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文章页-正文(锁前)</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="ad_pos_4_status" lay-skin="switch" lay-text="展示|隐藏" value="1" {if condition="!isset($config.ad_pos_4_status) || $config.ad_pos_4_status == 1"}checked{/if}>
+                    </div>
+                </div>
+
+                <div class="layui-form-item" style="margin-top: 30px;">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="save">保存广告配置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function(){
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            form.on('submit(save)', function(data){
+                // Handle switches that are not checked (they won't be in data.field)
+                var fields = ['ad_global_status', 'ad_vip_exempt', 'ad_pos_1_status', 'ad_pos_2_status', 'ad_pos_3_status', 'ad_pos_4_status'];
+                fields.forEach(function(f){
+                    if(!data.field[f]) data.field[f] = 0;
+                });
+
+                $.post("{:url('settings/ad')}", data.field, function(res){
+                    if(res.code === 1){
+                        layer.msg(res.msg, {icon: 1});
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>
